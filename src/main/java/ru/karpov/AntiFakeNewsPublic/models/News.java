@@ -15,14 +15,14 @@ public class News {
     private String name;
     private String text;
     private Date date;
-    private Integer idCategory;
+    private Integer categoryId;
 
     public Integer getIdCategory() {
-        return idCategory;
+        return categoryId;
     }
 
     public void setIdCategory(final Integer idCategory) {
-        this.idCategory = idCategory;
+        this.categoryId = idCategory;
     }
 
     public Integer getId() {

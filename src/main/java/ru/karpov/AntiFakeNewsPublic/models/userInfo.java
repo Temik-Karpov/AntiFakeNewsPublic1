@@ -10,9 +10,27 @@ public class userInfo {
     private String username;
     private String email;
     private String description;
-    private double searchFakeRating;
-    private double fixFakeRating;
+    private Double searchFakeRating;
+    private Double fixFakeRating;
     private String imageUrl;
+    private Integer countOfPublications;
+    private Double averageMark;
+
+    public Double getAverageMark() {
+        return averageMark;
+    }
+
+    public void setAverageMark(Double averageMark) {
+        this.averageMark = averageMark;
+    }
+
+    public Integer getCountOfPublications() {
+        return countOfPublications;
+    }
+
+    public void setCountOfPublications(Integer countOfPublications) {
+        this.countOfPublications = countOfPublications;
+    }
 
     public String getEmail() {
         return email;

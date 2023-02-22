@@ -6,4 +6,5 @@ import ru.karpov.AntiFakeNewsPublic.models.userInfo;
 
 @Repository
 public interface userRepo extends JpaRepository<userInfo, Long> {
+    userInfo findUserById(final String id);
 }
