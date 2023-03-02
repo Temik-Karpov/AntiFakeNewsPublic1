@@ -1,6 +1,5 @@
 package ru.karpov.AntiFakeNewsPublic.config;
 
-/*
 import org.keycloak.adapters.KeycloakConfigResolver;
 import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
@@ -42,7 +41,7 @@ class securityConfig extends KeycloakWebSecurityConfigurerAdapter {
         http.cors().and().csrf().disable();
         http
                 .authorizeRequests()
-                .antMatchers("/api/service/**", "/", "/reloadMain").permitAll()
+                .antMatchers("/api/service/**", "/").permitAll()
                 .anyRequest().fullyAuthenticated();
     }
-}*/
+}

@@ -11,4 +11,5 @@ import java.util.List;
 public interface newsRepo extends JpaRepository<News, Long> {
     List<News> findNewsByAuthorId(final String userId);
     List<News> findNewsByCategoryId(final Integer categoryId);
+    News findNewsById(final Integer id);
 }
