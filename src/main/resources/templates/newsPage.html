@@ -10,7 +10,7 @@
 <div class ="container">
     <div class="pricing-header p-3 pb-md-4 mx-auto text-center">
         <h1 class="display-4 fw-normal" th:text="${news.getName()}"></h1>
-        <img style="border-radius: 30px; text-align: center" th:src="@{${news.getImageUrl()}}">
+        <img style="border-radius: 30px; text-align: center" th:src="@{${image}}">
     </div>
 
     <hr class="my-4">
@@ -19,7 +19,7 @@
             <p class="h3" th:text="${news.getText()}"></p>
             <hr class="my-4">
             <small class="text-muted">
-                Author: <a th:href="@{/profilePage/{username}(username = ${news.getAuthorName()})}" th:text="${news.getAuthorName()}"></a><br>
+                Author: <a th:href="@{/profilePage/{id}(id = ${news.getAuthorId()})}" th:text="${news.getAuthorId()}"></a><br>
                 Date: <div th:text="${news.getDate()}"></div><br>
             </small>
             <div th:if="${edit == 1}">

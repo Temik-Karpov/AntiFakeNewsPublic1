@@ -88,4 +88,14 @@ public class userInfo {
     public void setSearchFakeRating(final double searchFakeRating) {
         this.searchFakeRating = searchFakeRating;
     }
+
+    public void increaseCountOfPublications()
+    {
+        this.countOfPublications++;
+    }
+
+    public void decreaseCountOfPublications()
+    {
+        this.countOfPublications--;
+    }
 }
