@@ -117,6 +117,10 @@ public class mainController {
     @GetMapping("/subscriptionsPage")
     public String getSubscriptionsPage(Model model)
     {
+        if(userRepo.findUserById(getAuthUserId()) == null)
+        {
+            return "addUserInfoPage";
+        }
         final List<userInfo> subscribeUsers = new ArrayList<>();
         for (Subscription subscribe : subscribeRepo.findSubscriptionByUserId(getAuthUserId()))
         {
@@ -153,12 +157,7 @@ public class mainController {
     @GetMapping("/logout")
     public String logout(HttpServletRequest request, Model model) throws ServletException {
         request.logout();
-        List<News> pub;
-        pub = newsRepo.findAll();
-        Collections.reverse(pub);
-        model.addAttribute("publications", pub);
-        model.addAttribute("users", userRepo);
-        return "mainPage";
+        return "redirect:/";
     }
 
     @GetMapping("/newsPage/{id}")
@@ -166,6 +165,8 @@ public class mainController {
                               Model model)
     {
         model.addAttribute("news", newsRepo.findNewsById(id));
+        model.addAttribute("user",
+                userRepo.findUserById(newsRepo.findNewsById(id).getAuthorId()).getUsername());
         model.addAttribute("image", imageNewsRepo.findAllByNewsId(id).size() != 0 ?
         imageNewsRepo.findAllByNewsId(id).get(0).getImageUrl() : null);
         model.addAttribute("isAuth", isAuth());
@@ -210,6 +211,10 @@ public class mainController {
     @GetMapping("/addNewsPage")
     public String getAddNewsPage(Model model)
     {
+        if(userRepo.findUserById(getAuthUserId()) == null)
+        {
+            return "addUserInfoPage";
+        }
         model.addAttribute("publication", 0);
         model.addAttribute("isAuth", isAuth());
         return "addNewsPage";

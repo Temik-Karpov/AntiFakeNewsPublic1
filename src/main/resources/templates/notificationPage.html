@@ -12,44 +12,27 @@
 
 <hr class="my-4">
 
-<form class="needs-validation" action="/addUserInfo" method="post" enctype="multipart/form-data">
+<form class="needs-validation" th:action="@{/sendNotification/{id}(id = ${id})}" method="post" enctype="multipart/form-data">
     <div class="col-sm-6">
-        <label class="form-label">Username</label>
+        <label class="form-label">Name</label>
         <div class="input-group has-validation">
-            <input type="text" class="form-control" name="username">
+            <input type="text" class="form-control" name="name">
         </div>
     </div>
+
     <br>
 
     <div class="col-sm-6">
-        <label class="form-label">Email</label>
+        <label class="form-label">Notification</label>
         <div class="input-group has-validation">
-            <input type="email" class="form-control" name="email">
-        </div>
-    </div>
-    <br>
-
-    <div class="col-sm-6">
-        <label class="form-label">Description</label>
-        <div class="input-group has-validation">
-            <textarea class="form-control" name="description"></textarea>
-        </div>
-    </div>
-
-    <div class="col-sm-6">
-        <label class="form-label">Photo</label>
-        <div class="input-group has-validation">
-            <input type="file" id="image" name="image">
+            <textarea class="form-control" name="notification"></textarea>
         </div>
     </div>
     <br>
     <div class="text-danger">
-        <p th:if="${ageError == 1}">You must be younger 100</p>
         <p th:if="${nullError == 1}">Enter information</p>
-        <p th:if="${imageError == 1}">Image should not weigh more than 30MB</p>
-        <p th:if="${descError == 1}">Description max - 300, username min - 15</p>
     </div>
-    <button class="w-100 btn btn-primary btn-lg" type="submit">Add info</button>
+    <button class="w-100 btn btn-primary btn-lg" type="submit">Send</button>
 </form>
 <hr class="my-4">
 </body>

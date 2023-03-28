@@ -58,6 +58,10 @@ public class workController {
                           @RequestParam("category") Integer category,
                           @RequestParam("photo") MultipartFile file,
                           Model model) throws IOException {
+        if(userRepo.findUserById(getAuthUserId()) == null)
+        {
+            return "addUserInfoPage";
+        }
         model.addAttribute("isAuth", isAuth());
         if(text.isEmpty() || title.isEmpty())
         {
@@ -79,7 +83,9 @@ public class workController {
         //TODO: несколько снимков сразу добавлять
         if(file.getBytes().length > 0) {
             StringBuilder fileNames = new StringBuilder();
-            Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/images",
+            //Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/images",
+                    //file.getOriginalFilename());
+            Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/images",
                     file.getOriginalFilename());
             fileNames.append(file.getOriginalFilename());
             Files.write(fileNameAndPath, file.getBytes());
@@ -89,12 +95,7 @@ public class workController {
             imageNewsRepo.save(image);
         }
 
-        List<News> pub;     //TODO: надо что то сделать с переворотм списка
-        pub = newsRepo.findAll();
-        Collections.reverse(pub);
-        model.addAttribute("publications", pub);
-        model.addAttribute("users", userRepo);
-        return "mainPage";
+        return "redirect:/";
     }
 
     @GetMapping("/deleteNews/{id}")
@@ -104,17 +105,16 @@ public class workController {
         News news = newsRepo.findNewsById(id);
         newsRepo.delete(news);
         imageNewsRepo.deleteAll(imageNewsRepo.findAllByNewsId(id));     //todo: удаление картинок из path
-        List<News> pub;
-        pub = newsRepo.findAll();
-        Collections.reverse(pub);
-        model.addAttribute("publications", pub);
-        model.addAttribute("users", userRepo);
-        return "mainPage";
+        return "redirect:/";
     }
 
     @GetMapping("/editNews/{id}")
     public String editNews(@PathVariable("id") Integer id, Model model)
     {
+        if(userRepo.findUserById(getAuthUserId()) == null)
+        {
+            return "addUserInfoPage";
+        }
         model.addAttribute("isAuth", isAuth());
         model.addAttribute("publication", newsRepo.findNewsById(id));
         model.addAttribute("users", userRepo);
@@ -127,6 +127,10 @@ public class workController {
                            @RequestParam("mark") Integer mark,
                            Model model)
     {
+        if(userRepo.findUserById(getAuthUserId()) == null)
+        {
+            return "addUserInfoPage";
+        }
         model.addAttribute("isAuth", isAuth());
 
         Mark newMark = new Mark();
@@ -144,43 +148,36 @@ public class workController {
         user.setAverageMark((double) (sum / user.getCountOfPublications()));
         userRepo.save(user);
 
-        List<News> pub;
-        pub = newsRepo.findAll();
-        Collections.reverse(pub);
-        model.addAttribute("publications", pub);
-        model.addAttribute("users", userRepo);
-        return "mainPage";
+        return "redirect:/";
     }
 
     @GetMapping("/subscribeUser/{id}")
     public String subscribeUser(@PathVariable("id") String id, Model model)
     {
+        if(userRepo.findUserById(getAuthUserId()) == null)
+        {
+            return "addUserInfoPage";
+        }
         model.addAttribute("isAuth", isAuth());
         Subscription subscribe = new Subscription();
         subscribe.setUserSubscribeId(id);
         subscribe.setUserId(getAuthUserId());
         subscribeRepo.save(subscribe);
 
-        List<News> pub;
-        pub = newsRepo.findAll();
-        Collections.reverse(pub);
-        model.addAttribute("publications", pub);
-        model.addAttribute("users", userRepo);
-        return "mainPage";
+        return "redirect:/";
     }
 
     @GetMapping("/unsubscribeUser/{id}")
     public String unsubscribeUser(@PathVariable("id") String id, Model model)
     {
+        if(userRepo.findUserById(getAuthUserId()) == null)
+        {
+            return "addUserInfoPage";
+        }
         model.addAttribute("isAuth", isAuth());
         subscribeRepo.delete(subscribeRepo.findSubscriptionByUserSubscribeIdAndAndUserId(id, getAuthUserId()));
 
-        List<News> pub;
-        pub = newsRepo.findAll();
-        Collections.reverse(pub);
-        model.addAttribute("publications", pub);
-        model.addAttribute("users", userRepo);
-        return "mainPage";
+        return "redirect:/";
     }
 
     @PostMapping("/addUserInfo")
@@ -216,18 +213,20 @@ public class workController {
         newUser.setDescription(description);
         newUser.setCountOfPublications(0);
         newUser.setEmail(email);
+        newUser.setFixFakeRating(10);
+        newUser.setSearchFakeRating(10);
 
         System.out.println(file.getBytes().length);
         StringBuilder fileNames = new StringBuilder();
-        Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/images",
-                file.getOriginalFilename());
+        //Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/images",
+                //file.getOriginalFilename());
+        Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/images",
+            file.getOriginalFilename());
         fileNames.append(file.getOriginalFilename());
         Files.write(fileNameAndPath, file.getBytes());
         newUser.setImageUrl("/images/" + file.getOriginalFilename());
 
         userRepo.save(newUser);
-        model.addAttribute("publications", newsRepo.findAll());
-        model.addAttribute("users", userRepo);
-        return "mainPage";
+        return "redirect:/authProfilePage";
     }
 }

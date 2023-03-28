@@ -5,6 +5,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import ru.karpov.AntiFakeNewsPublic.models.News;
 import ru.karpov.AntiFakeNewsPublic.models.Notification;
 import ru.karpov.AntiFakeNewsPublic.repos.*;
@@ -42,14 +44,18 @@ public class adminController {
     public String deleteUser(@PathVariable("id") String id)
     {
         userRepo.delete(userRepo.findUserById(id));
-        newsRepo.deleteAll(newsRepo.findNewsByAuthorId(id));
-        for (News news : newsRepo.findNewsByAuthorId(id))
-        {
-            imageNewsRepo.deleteAll(imageNewsRepo.findAllByNewsId(news.getId()));
+        if(newsRepo.findNewsByAuthorId(id) != null) {
+            newsRepo.deleteAll(newsRepo.findNewsByAuthorId(id));
+            for (News news : newsRepo.findNewsByAuthorId(id)) {
+                if(imageNewsRepo.findAllByNewsId(news.getId()) != null)
+                    imageNewsRepo.deleteAll(imageNewsRepo.findAllByNewsId(news.getId()));
+            }
         }
-        subscribeRepo.deleteAll(subscribeRepo.findSubscriptionByUserId(id));
-        markRepo.deleteAll(markRepo.findMarkByUserId(id));
-        return "mainPage";
+        if(subscribeRepo.findSubscriptionByUserId(id) != null)
+            subscribeRepo.deleteAll(subscribeRepo.findSubscriptionByUserId(id));
+        if(markRepo.findMarkByUserId(id) != null)
+            markRepo.deleteAll(markRepo.findMarkByUserId(id));
+        return "forward:/userListPage";
     }
 
     @GetMapping("/notifyUserPage/{id}")
@@ -57,6 +63,28 @@ public class adminController {
                              Model model)
     {
         model.addAttribute("id", id);
-        return "mainPage";
+        return "notificationPage";
     }
+
+    @PostMapping("/sendNotification/{id}")
+    public String sendNotification(@PathVariable("id") String id,
+                                   @RequestParam("name") String name,
+                                   @RequestParam("notification") String notification,
+                                   Model model)
+    {
+        if(name.isEmpty() || notification.isEmpty())
+        {
+            model.addAttribute("id", id);
+            model.addAttribute("nullError", 1);
+            return "notificationPage";
+        }
+        Notification newNotification = new Notification();
+        newNotification.setName(name);
+        newNotification.setText(notification);
+        newNotification.setUserId(id);
+
+        notificationRepo.save(newNotification);
+        return "redirect:/userListPage";
+    }
+
 }
