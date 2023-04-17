@@ -34,14 +34,14 @@ public class adminController {
     }
 
     @GetMapping("/userListPage")
-    public String getUsersListPage(Model model)
+    public String getUsersListPage(final Model model)
     {
         model.addAttribute("users", userRepo.findAll());
         return "userListPage";
     }
 
     @GetMapping("/deleteUser/{id}")
-    public String deleteUser(@PathVariable("id") String id)
+    public String deleteUser(@PathVariable("id") final String id)
     {
         userRepo.delete(userRepo.findUserById(id));
         if(newsRepo.findNewsByAuthorId(id) != null) {
@@ -59,7 +59,7 @@ public class adminController {
     }
 
     @GetMapping("/notifyUserPage/{id}")
-    public String getNotifyUserPage(@PathVariable("id") String id,
+    public String getNotifyUserPage(@PathVariable("id") final String id,
                              Model model)
     {
         model.addAttribute("id", id);
@@ -67,9 +67,9 @@ public class adminController {
     }
 
     @PostMapping("/sendNotification/{id}")
-    public String sendNotification(@PathVariable("id") String id,
-                                   @RequestParam("name") String name,
-                                   @RequestParam("notification") String notification,
+    public String sendNotification(@PathVariable("id") final String id,
+                                   @RequestParam("name") final String name,
+                                   @RequestParam("notification") final String notification,
                                    Model model)
     {
         if(name.isEmpty() || notification.isEmpty())
@@ -86,5 +86,4 @@ public class adminController {
         notificationRepo.save(newNotification);
         return "redirect:/userListPage";
     }
-
 }

@@ -18,18 +18,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 
 @Controller
 public class workController {
 
-    private userRepo userRepo;
-    private newsRepo newsRepo;
-    private subscriptionRepo subscribeRepo;
-    private markRepo markRepo;
-    private imageNewsRepo imageNewsRepo;
+    private final userRepo userRepo;
+    private final newsRepo newsRepo;
+    private final subscriptionRepo subscribeRepo;
+    private final markRepo markRepo;
+    private final imageNewsRepo imageNewsRepo;
 
     @Autowired
     public workController(final userRepo userRepo, final newsRepo newsRepo, final subscriptionRepo subscribeRepo,
@@ -42,11 +40,6 @@ public class workController {
         this.imageNewsRepo = imageNewsRepo;
     }
 
-    private int isAuth()
-    {
-        return SecurityContextHolder.getContext().getAuthentication().getName().equals("anonymousUser") ? 0 : 1;
-    }
-
     private String getAuthUserId()
     {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -54,15 +47,14 @@ public class workController {
     }
 
     @PostMapping("/addNews")
-    public String addNews(@RequestParam("Title") String title, @RequestParam("text") String text,
-                          @RequestParam("category") Integer category,
-                          @RequestParam("photo") MultipartFile file,
+    public String addNews(@RequestParam("Title") final String title, @RequestParam("text") final String text,
+                          @RequestParam("category") final Integer category,
+                          @RequestParam("photo") final MultipartFile[] files,
                           Model model) throws IOException {
         if(userRepo.findUserById(getAuthUserId()) == null)
         {
             return "addUserInfoPage";
         }
-        model.addAttribute("isAuth", isAuth());
         if(text.isEmpty() || title.isEmpty())
         {
             model.addAttribute("nullError", 1);
@@ -80,28 +72,27 @@ public class workController {
         user.increaseCountOfPublications();
         userRepo.save(user);
 
-        //TODO: несколько снимков сразу добавлять
-        if(file.getBytes().length > 0) {
-            StringBuilder fileNames = new StringBuilder();
-            //Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/images",
-                    //file.getOriginalFilename());
-            Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/images",
-                    file.getOriginalFilename());
-            fileNames.append(file.getOriginalFilename());
-            Files.write(fileNameAndPath, file.getBytes());
-            final imageNews image = new imageNews();
-            image.setImageUrl("/images/" + file.getOriginalFilename());
-            image.setNewsId(news.getId());
-            imageNewsRepo.save(image);
+        if(files.length > 0) {
+            for (MultipartFile file : files) {
+                StringBuilder fileNames = new StringBuilder();
+                Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/newsImages",
+                file.getOriginalFilename());
+                //Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/newsImages",
+                       // file.getOriginalFilename());
+                fileNames.append(file.getOriginalFilename());
+                Files.write(fileNameAndPath, file.getBytes());
+                final imageNews image = new imageNews();
+                image.setImageUrl("/newsImages/" + file.getOriginalFilename());
+                image.setNewsId(news.getId());
+                imageNewsRepo.save(image);
+            }
         }
-
         return "redirect:/";
     }
 
     @GetMapping("/deleteNews/{id}")
-    public String deleteNews(@PathVariable("id") Integer id, Model model)
+    public String deleteNews(@PathVariable("id") final Integer id)
     {
-        model.addAttribute("isAuth", isAuth());
         News news = newsRepo.findNewsById(id);
         newsRepo.delete(news);
         imageNewsRepo.deleteAll(imageNewsRepo.findAllByNewsId(id));     //todo: удаление картинок из path
@@ -109,13 +100,13 @@ public class workController {
     }
 
     @GetMapping("/editNews/{id}")
-    public String editNews(@PathVariable("id") Integer id, Model model)
+    public String editNews(@PathVariable("id") final Integer id,
+                           final Model model)
     {
         if(userRepo.findUserById(getAuthUserId()) == null)
         {
             return "addUserInfoPage";
         }
-        model.addAttribute("isAuth", isAuth());
         model.addAttribute("publication", newsRepo.findNewsById(id));
         model.addAttribute("users", userRepo);
         newsRepo.delete(newsRepo.findNewsById(id));     //todo: сделать отмену изменения новости(чтобы не удалялась)
@@ -123,15 +114,13 @@ public class workController {
     }
 
     @PostMapping("/rateNews/{id}")
-    public String rateNews(@PathVariable("id") Integer id,
-                           @RequestParam("mark") Integer mark,
-                           Model model)
+    public String rateNews(@PathVariable("id")final  Integer id,
+                           @RequestParam("mark")final  Integer mark)
     {
         if(userRepo.findUserById(getAuthUserId()) == null)
         {
             return "addUserInfoPage";
         }
-        model.addAttribute("isAuth", isAuth());
 
         Mark newMark = new Mark();
         newMark.setUserId(getAuthUserId());
@@ -152,13 +141,12 @@ public class workController {
     }
 
     @GetMapping("/subscribeUser/{id}")
-    public String subscribeUser(@PathVariable("id") String id, Model model)
+    public String subscribeUser(@PathVariable("id") final String id)
     {
         if(userRepo.findUserById(getAuthUserId()) == null)
         {
             return "addUserInfoPage";
         }
-        model.addAttribute("isAuth", isAuth());
         Subscription subscribe = new Subscription();
         subscribe.setUserSubscribeId(id);
         subscribe.setUserId(getAuthUserId());
@@ -168,25 +156,23 @@ public class workController {
     }
 
     @GetMapping("/unsubscribeUser/{id}")
-    public String unsubscribeUser(@PathVariable("id") String id, Model model)
+    public String unsubscribeUser(@PathVariable("id") final String id)
     {
         if(userRepo.findUserById(getAuthUserId()) == null)
         {
             return "addUserInfoPage";
         }
-        model.addAttribute("isAuth", isAuth());
         subscribeRepo.delete(subscribeRepo.findSubscriptionByUserSubscribeIdAndAndUserId(id, getAuthUserId()));
 
         return "redirect:/";
     }
 
     @PostMapping("/addUserInfo")
-    public String addUserInfo(@RequestParam("username") String username,
-                              @RequestParam("email") String email,
-                              @RequestParam("description") String description,
-                              @RequestParam("image") MultipartFile file,
+    public String addUserInfo(@RequestParam("username") final String username,
+                              @RequestParam("email") final String email,
+                              @RequestParam("description") final String description,
+                              @RequestParam("image") final MultipartFile file,
                               Model model) throws IOException {
-        model.addAttribute("isAuth", isAuth());
         if(username.isEmpty() || description.isEmpty() || file.getBytes().length < 1)
         {
             model.addAttribute("nullError", 1);
@@ -216,15 +202,14 @@ public class workController {
         newUser.setFixFakeRating(10);
         newUser.setSearchFakeRating(10);
 
-        System.out.println(file.getBytes().length);
         StringBuilder fileNames = new StringBuilder();
-        //Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/images",
-                //file.getOriginalFilename());
-        Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/images",
-            file.getOriginalFilename());
+        Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/profileImages",
+                file.getOriginalFilename());
+        //Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/profileImages",
+            //file.getOriginalFilename());
         fileNames.append(file.getOriginalFilename());
         Files.write(fileNameAndPath, file.getBytes());
-        newUser.setImageUrl("/images/" + file.getOriginalFilename());
+        newUser.setImageUrl("/profileImages/" + file.getOriginalFilename());
 
         userRepo.save(newUser);
         return "redirect:/authProfilePage";

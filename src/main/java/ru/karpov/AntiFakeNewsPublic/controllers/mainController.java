@@ -23,26 +23,24 @@ import java.util.List;
 @Controller
 public class mainController {
 
-    private userRepo userRepo;
-    private newsRepo newsRepo;
-    private subscriptionRepo subscribeRepo;
-    private markRepo markRepo;
-    private imageNewsRepo imageNewsRepo;
+    private final userRepo userRepo;
+    private final newsRepo newsRepo;
+    private final subscriptionRepo subscribeRepo;
+    private final markRepo markRepo;
+    private final imageNewsRepo imageNewsRepo;
+    private final notificationRepo notificationRepo;
 
     @Autowired
     public mainController(final userRepo userRepo, final newsRepo newsRepo, final subscriptionRepo subscribeRepo,
-                          final markRepo markRepo, final imageNewsRepo imageNewsRepo)
+                          final markRepo markRepo, final imageNewsRepo imageNewsRepo,
+                          final notificationRepo notificationRepo)
     {
         this.userRepo = userRepo;
         this.newsRepo = newsRepo;
         this.subscribeRepo = subscribeRepo;
         this.markRepo = markRepo;
         this.imageNewsRepo = imageNewsRepo;
-    }
-
-    private int isAuth()
-    {
-        return SecurityContextHolder.getContext().getAuthentication().getName().equals("anonymousUser") ? 0 : 1;
+        this.notificationRepo = notificationRepo;
     }
 
     private String getAuthUserId()
@@ -52,19 +50,17 @@ public class mainController {
     }
 
     @GetMapping("/")
-    public String getMainPage(Model model)
+    public String getMainPage(final Model model)
     {
         model.addAttribute("publications", newsRepo.findAll());
         model.addAttribute("users", userRepo);
-        model.addAttribute("isAuth", isAuth());
         return "mainPage";
     }
 
     @GetMapping("/authProfilePage")
-    public String getAuthProfilePage(Model model)
+    public String getAuthProfilePage(final Model model)
     {
         final userInfo authUser = userRepo.findUserById(getAuthUserId());
-        model.addAttribute("isAuth", isAuth());
         if(authUser != null)
         {
             model.addAttribute("user", authUser);
@@ -76,7 +72,8 @@ public class mainController {
     }
 
     @PostMapping("/reloadMainPage")
-    public String getReloadMainPage(@RequestParam("category") Integer category, Model model)
+    public String getReloadMainPage(@RequestParam("category") final Integer category,
+                                    final Model model)
     {
         model.addAttribute("users", userRepo);
         if(category != 0) {
@@ -89,12 +86,12 @@ public class mainController {
             Collections.reverse(pub);
             model.addAttribute("publications", pub);
         }
-        model.addAttribute("isAuth", isAuth());
         return "mainPage";
     }
 
     @PostMapping("/reloadAuthProfilePage")
-    public String reloadAuthProfilePage(@RequestParam("category") Integer category, Model model)
+    public String reloadAuthProfilePage(@RequestParam("category") final Integer category,
+                                        final Model model)
     {
         final userInfo authUser = userRepo.findUserById(getAuthUserId());
         model.addAttribute("users", userRepo);
@@ -110,12 +107,11 @@ public class mainController {
             Collections.reverse(pub);
             model.addAttribute("publications", newsRepo.findNewsByAuthorId(getAuthUserId()));
         }
-        model.addAttribute("isAuth", isAuth());
         return "authProfilePage";
     }
 
     @GetMapping("/subscriptionsPage")
-    public String getSubscriptionsPage(Model model)
+    public String getSubscriptionsPage(final Model model)
     {
         if(userRepo.findUserById(getAuthUserId()) == null)
         {
@@ -127,17 +123,16 @@ public class mainController {
             subscribeUsers.add(userRepo.findUserById(subscribe.getUserSubscribeId()));
         }
         model.addAttribute("subscribes", subscribeUsers);
-        model.addAttribute("isAuth", isAuth());
         return "subscriptionsPage";
     }
 
     @GetMapping("/profilePage/{usernameId}")
-    public String getProfilePage(@PathVariable("usernameId") String usernameId, Model model)
+    public String getProfilePage(@PathVariable("usernameId") final String usernameId,
+                                 final Model model)
     {
         userInfo user = userRepo.findUserById(usernameId);
         model.addAttribute("user", user);
         model.addAttribute("publications", newsRepo.findNewsByAuthorId(usernameId));
-        model.addAttribute("isAuth", isAuth());
         model.addAttribute("users", userRepo);
         if(getAuthUserId().equals(user.getId()))
         {
@@ -155,21 +150,20 @@ public class mainController {
     }
 
     @GetMapping("/logout")
-    public String logout(HttpServletRequest request, Model model) throws ServletException {
+    public String logout(final HttpServletRequest request) throws ServletException {
         request.logout();
         return "redirect:/";
     }
 
     @GetMapping("/newsPage/{id}")
-    public String getNewsPage(@PathVariable("id") Integer id,
-                              Model model)
+    public String getNewsPage(@PathVariable("id") final Integer id,
+                              final Model model)
     {
         model.addAttribute("news", newsRepo.findNewsById(id));
         model.addAttribute("user",
                 userRepo.findUserById(newsRepo.findNewsById(id).getAuthorId()).getUsername());
         model.addAttribute("image", imageNewsRepo.findAllByNewsId(id).size() != 0 ?
         imageNewsRepo.findAllByNewsId(id).get(0).getImageUrl() : null);
-        model.addAttribute("isAuth", isAuth());
         if(newsRepo.findNewsById(id).getAuthorId().equals(getAuthUserId()))
         {
             model.addAttribute("edit", 1);
@@ -187,9 +181,9 @@ public class mainController {
     }
 
     @PostMapping("/reloadProfilePage/{userId}")
-    public String reloadProfilePage(@PathVariable("userId") String userId,
-                                    @RequestParam("category") Integer category,
-                                    Model model)
+    public String reloadProfilePage(@PathVariable("userId") final String userId,
+                                    @RequestParam("category") final Integer category,
+                                    final  Model model)
     {
         userInfo user = userRepo.findUserById(userId);
         model.addAttribute("users", userRepo);
@@ -204,19 +198,17 @@ public class mainController {
             Collections.reverse(pub);
             model.addAttribute("publications", newsRepo.findNewsByAuthorId(userId));
         }
-        model.addAttribute("isAuth", isAuth());
         return "profilePage";
     }
 
     @GetMapping("/addNewsPage")
-    public String getAddNewsPage(Model model)
+    public String getAddNewsPage(final Model model)
     {
         if(userRepo.findUserById(getAuthUserId()) == null)
         {
             return "addUserInfoPage";
         }
         model.addAttribute("publication", 0);
-        model.addAttribute("isAuth", isAuth());
         return "addNewsPage";
     }
 
@@ -224,5 +216,12 @@ public class mainController {
     public String getAddUserInfoPage()
     {
         return "addUserInfoPage";
+    }
+
+    @GetMapping("/warningsPage")
+    public String getWarningsPage(final Model model)
+    {
+        model.addAttribute("warnings", notificationRepo.getNotificationByUserId(getAuthUserId()));
+        return "warningsPage";
     }
 }
