@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import ru.karpov.AntiFakeNewsPublic.models.Fake;
+import ru.karpov.AntiFakeNewsPublic.models.News;
 import ru.karpov.AntiFakeNewsPublic.models.fileFake;
 import ru.karpov.AntiFakeNewsPublic.repos.fakeRepo;
 import ru.karpov.AntiFakeNewsPublic.repos.fileFakeRepo;
@@ -21,6 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 
 @Controller
 public class fakeController {
@@ -64,8 +67,11 @@ public class fakeController {
             model.addAttribute("nullError", 1);
             return "addFakePage";
         }
-        Fake newFake = new Fake(newsId, getAuthUserId(), problem, proofs);
+
+        Fake newFake = new Fake(newsId, getAuthUserId(), problem, proofs,
+                newsRepo.findNewsById(newsId).getIdCategory());
         fakeRepo.save(newFake);
+
         if(files.length > 0) {
             for (MultipartFile file : files) {
                 StringBuilder fileNames = new StringBuilder();
@@ -82,5 +88,22 @@ public class fakeController {
             }
         }
         return "redirect:/";
+    }
+
+    @GetMapping("/fakesPage")
+    public String getFakesPage(final Model model)
+    {
+        model.addAttribute("users", userRepo);
+        model.addAttribute("fakes", fakeRepo.findFakeByCategoryId(1));
+        return "fakesPage";
+    }
+
+    @PostMapping("/reloadFakesPage")
+    public String getReloadMainPage(@RequestParam("category") final Integer category,
+                                    final Model model)
+    {
+        model.addAttribute("users", userRepo);
+        model.addAttribute("fakes", fakeRepo.findFakeByCategoryId(category));
+        return "fakesPage";
     }
 }

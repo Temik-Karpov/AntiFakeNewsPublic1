@@ -22,6 +22,8 @@
                 class="me-3 py-2 text-dark text-decoration-none" href="/userListPage">Users</a>
                 <a th:if="${#request.isUserInRole('USER')}"
                    class="me-3 py-2 text-dark text-decoration-none" href="/warningsPage">Warnings</a>
+                <a th:if="${#request.isUserInRole('FAKE_ADMIN')}"
+                   class="me-3 py-2 text-dark text-decoration-none" href="/fakesPage">Fakes</a>
                 <a th:if="${#request.isUserInRole('ADMIN')} or ${#request.isUserInRole('USER')}"
                    class="me-3 py-2 text-dark text-decoration-none" href="/authProfilePage">Profile</a>
                 <a th:if="${#request.isUserInRole('ADMIN')} or ${#request.isUserInRole('USER')}"
