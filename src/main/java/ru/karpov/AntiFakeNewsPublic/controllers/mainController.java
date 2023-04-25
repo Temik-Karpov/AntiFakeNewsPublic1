@@ -52,7 +52,7 @@ public class mainController {
     @GetMapping("/")
     public String getMainPage(final Model model)
     {
-        model.addAttribute("publications", newsRepo.findAll());
+        model.addAttribute("publications", newsRepo.findNewsByIsBlockedFalse());
         model.addAttribute("users", userRepo);
         return "mainPage";
     }
@@ -68,7 +68,7 @@ public class mainController {
             model.addAttribute("users", userRepo);
             return "authProfilePage";
         }
-        return "addUserInfoPage"; //TODO: сделать либо переход на страницу заполнения инфы, либо выспалвающее окошко
+        return "addUserInfoPage";
     }
 
     @PostMapping("/reloadMainPage")
@@ -77,14 +77,11 @@ public class mainController {
     {
         model.addAttribute("users", userRepo);
         if(category != 0) {
-            model.addAttribute("publications", newsRepo.findNewsByCategoryId(category));
+            model.addAttribute("publications", newsRepo.findNewsByCategoryIdAndIsBlockedFalse(category));
         }
         else
         {
-            List<News> pub;
-            pub = newsRepo.findAll();
-            Collections.reverse(pub);
-            model.addAttribute("publications", pub);
+            model.addAttribute("publications", newsRepo.findNewsByIsBlockedFalse());
         }
         return "mainPage";
     }
@@ -97,8 +94,8 @@ public class mainController {
         model.addAttribute("users", userRepo);
         model.addAttribute("user", authUser);
         if(category != 0) {
-            model.addAttribute("publications", newsRepo.findNewsByCategoryIdAndAuthorId(category,
-                    getAuthUserId()));
+            model.addAttribute("publications",
+                    newsRepo.findNewsByCategoryIdAndAuthorId(category, getAuthUserId()));
         }
         else
         {
@@ -132,7 +129,7 @@ public class mainController {
     {
         userInfo user = userRepo.findUserById(usernameId);
         model.addAttribute("user", user);
-        model.addAttribute("publications", newsRepo.findNewsByAuthorId(usernameId));
+        model.addAttribute("publications", newsRepo.findNewsByAuthorIdAndIsBlockedIsFalse(usernameId));
         model.addAttribute("users", userRepo);
         if(getAuthUserId().equals(user.getId()))
         {
@@ -189,14 +186,12 @@ public class mainController {
         model.addAttribute("users", userRepo);
         model.addAttribute("user", user);
         if(category != 0) {
-            model.addAttribute("publications", newsRepo.findNewsByCategoryIdAndAuthorId(category, userId));
+            model.addAttribute("publications",
+                    newsRepo.findNewsByCategoryIdAndAuthorIdAndIsBlockedIsFalse(category, userId));
         }
         else
         {
-            List<News> pub;
-            pub = newsRepo.findAll();
-            Collections.reverse(pub);
-            model.addAttribute("publications", newsRepo.findNewsByAuthorId(userId));
+            model.addAttribute("publications", newsRepo.findNewsByAuthorIdAndIsBlockedIsFalse(userId));
         }
         return "profilePage";
     }

@@ -45,7 +45,9 @@
                    th:text="${users.findUserById(fake.getUserId()).getUsername()}"></a>
             </td>
             <td th:text="${users.findUserById(fake.getUserId()).getSearchFakeRating()}"></td>
-            <td>Show</td>
+            <td>
+                <a th:href="@{/fakePage/{id}(id = ${fake.getId()})}">Show</a>
+            </td>
         </tr>
     </div>
     </tbody>

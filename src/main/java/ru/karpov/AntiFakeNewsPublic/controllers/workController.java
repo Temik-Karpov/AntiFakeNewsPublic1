@@ -63,30 +63,31 @@ public class workController {
         }
         News news = new News();
         news.setName(title);
-        news.setIdCategory(category);
+        news.setCategoryId(category);
         news.setText(text);
         news.setDate(Date.from(Instant.now()));
         news.setAuthorId(getAuthUserId());
+        news.setBlocked(false);
         newsRepo.save(news);
         userInfo user = userRepo.findUserById(getAuthUserId());
         user.increaseCountOfPublications();
         userRepo.save(user);
 
-        if(files.length > 0) {
             for (MultipartFile file : files) {
-                StringBuilder fileNames = new StringBuilder();
-                Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/newsImages",
-                file.getOriginalFilename());
-                //Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/newsImages",
-                       // file.getOriginalFilename());
-                fileNames.append(file.getOriginalFilename());
-                Files.write(fileNameAndPath, file.getBytes());
-                final imageNews image = new imageNews();
-                image.setImageUrl("/newsImages/" + file.getOriginalFilename());
-                image.setNewsId(news.getId());
-                imageNewsRepo.save(image);
+                if(file.getBytes().length > 0) {
+                    StringBuilder fileNames = new StringBuilder();
+                    Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/newsImages",
+                            file.getOriginalFilename());
+                    //Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/newsImages",
+                    // file.getOriginalFilename());
+                    fileNames.append(file.getOriginalFilename());
+                    Files.write(fileNameAndPath, file.getBytes());
+                    final imageNews image = new imageNews();
+                    image.setImageUrl("/newsImages/" + file.getOriginalFilename());
+                    image.setNewsId(news.getId());
+                    imageNewsRepo.save(image);
+                }
             }
-        }
         return "redirect:/";
     }
 

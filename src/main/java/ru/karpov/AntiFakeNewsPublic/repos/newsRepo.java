@@ -9,7 +9,10 @@ import java.util.List;
 @Repository
 public interface newsRepo extends JpaRepository<News, Long> {
     List<News> findNewsByAuthorId(final String userId);
-    List<News> findNewsByCategoryId(final Integer categoryId);
-    News findNewsById(final Integer id);
+    List<News> findNewsByAuthorIdAndIsBlockedIsFalse(final String userId);
+    List<News> findNewsByCategoryIdAndIsBlockedFalse(final Integer categoryId);
     List<News> findNewsByCategoryIdAndAuthorId(final Integer categoryId, final String userId);
+    News findNewsById(final Integer id);
+    List<News> findNewsByCategoryIdAndAuthorIdAndIsBlockedIsFalse(final Integer categoryId, final String userId);
+    List<News> findNewsByIsBlockedFalse();
 }

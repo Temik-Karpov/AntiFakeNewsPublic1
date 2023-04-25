@@ -16,13 +16,23 @@ public class News {
     private String text;
     private Date date;
     private Integer categoryId;
+    private Boolean isBlocked;
 
-    public Integer getIdCategory() {
+
+    public Integer getCategoryId() {
         return categoryId;
     }
 
-    public void setIdCategory(final Integer idCategory) {
-        this.categoryId = idCategory;
+    public void setCategoryId(final Integer categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public Boolean getBlocked() {
+        return isBlocked;
+    }
+
+    public void setBlocked(final Boolean blocked) {
+        isBlocked = blocked;
     }
 
     public Integer getId() {

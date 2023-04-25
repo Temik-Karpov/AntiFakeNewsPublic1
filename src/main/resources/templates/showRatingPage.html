@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Rating</title>
+</head>
+<body>
+header th:insert="header :: header"></header>
+                <div class="container">
+                    <div class="pricing-header p-3 pb-md-4 mx-auto text-center">
+                        <h1 class="display-4 fw-normal">Rating</h1>
+                    </div>
+                    <hr class="my-4">
+                    <form action="" method="post">
+                        <select name="type" id="type" required>
+                            <option value="1">Search</option>
+                            <option value="2">Check</option>
+                        </select>
+                        <button type="submit">Reload</button>
+                    </form>
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Username</th>
+                            <th scope="col">Rating</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <div th:each="user : ${users}">
+                            <tr>
+                                <th scope="row" th:text="${fake.getId()}"></th>
+                <td>
+                    <a th:href="@{/profilePage/{id}(id = ${fake.getUserId()})}"
+                       th:text="${users.findUserById(fake.getUserId()).getUsername()}"></a>
+                </td>
+                <td th:text="${users.findUserById(fake.getUserId()).getSearchFakeRating()}"></td>
+            </tr>
+        </div>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

@@ -12,34 +12,35 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import ru.karpov.AntiFakeNewsPublic.models.Fake;
 import ru.karpov.AntiFakeNewsPublic.models.News;
+import ru.karpov.AntiFakeNewsPublic.models.Notification;
 import ru.karpov.AntiFakeNewsPublic.models.fileFake;
-import ru.karpov.AntiFakeNewsPublic.repos.fakeRepo;
-import ru.karpov.AntiFakeNewsPublic.repos.fileFakeRepo;
-import ru.karpov.AntiFakeNewsPublic.repos.newsRepo;
-import ru.karpov.AntiFakeNewsPublic.repos.userRepo;
+import ru.karpov.AntiFakeNewsPublic.repos.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
+
 
 @Controller
 public class fakeController {
 
     private final userRepo userRepo;
-    private newsRepo newsRepo;
-    private fakeRepo fakeRepo;
+    private final newsRepo newsRepo;
+    private final fakeRepo fakeRepo;
     private final fileFakeRepo fileFakeRepo;
+    private final imageNewsRepo imageNewsRepo;
+    private final notificationRepo notificationRepo;
 
     @Autowired
     fakeController(final userRepo userRepo, final newsRepo newsRepo, final fakeRepo fakeRepo,
-                   final fileFakeRepo fileFakeRepo) {
+                   final fileFakeRepo fileFakeRepo, final imageNewsRepo imageNewsRepo, final ru.karpov.AntiFakeNewsPublic.repos.notificationRepo notificationRepo) {
         this.newsRepo = newsRepo;
         this.userRepo = userRepo;
         this.fakeRepo = fakeRepo;
         this.fileFakeRepo = fileFakeRepo;
+        this.imageNewsRepo = imageNewsRepo;
+        this.notificationRepo = notificationRepo;
     }
 
     private String getAuthUserId() {
@@ -69,24 +70,27 @@ public class fakeController {
         }
 
         Fake newFake = new Fake(newsId, getAuthUserId(), problem, proofs,
-                newsRepo.findNewsById(newsId).getIdCategory());
+                newsRepo.findNewsById(newsId).getCategoryId());
         fakeRepo.save(newFake);
 
-        if(files.length > 0) {
             for (MultipartFile file : files) {
-                StringBuilder fileNames = new StringBuilder();
-                Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/fakeFiles",
-                        file.getOriginalFilename());
-                //Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/fakeFiles",
-                // file.getOriginalFilename());
-                fileNames.append(file.getOriginalFilename());
-                Files.write(fileNameAndPath, file.getBytes());
-                final fileFake fileFake = new fileFake();
-                fileFake.setFileUrl("/fakeFiles/" + file.getOriginalFilename());
-                fileFake.setFakeId(newFake.getId());
-                fileFakeRepo.save(fileFake);
+                if(file.getBytes().length > 0) {
+                    StringBuilder fileNames = new StringBuilder();
+                    Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/fakeFiles",
+                            file.getOriginalFilename());
+                    //Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/fakeFiles",
+                    // file.getOriginalFilename());
+                    fileNames.append(file.getOriginalFilename());
+                    Files.write(fileNameAndPath, file.getBytes());
+                    final fileFake fileFake = new fileFake();
+                    fileFake.setFileUrl("/fakeFiles/" + file.getOriginalFilename());
+                    fileFake.setFakeId(newFake.getId());
+                    fileFakeRepo.save(fileFake);
+                }
             }
-        }
+        News currentNews = newsRepo.findNewsById(newsId);
+        currentNews.setBlocked(true);
+        newsRepo.save(currentNews);
         return "redirect:/";
     }
 
@@ -94,7 +98,7 @@ public class fakeController {
     public String getFakesPage(final Model model)
     {
         model.addAttribute("users", userRepo);
-        model.addAttribute("fakes", fakeRepo.findFakeByCategoryId(1));
+        model.addAttribute("fakes", fakeRepo.findFakeByCategoryIdAndAdminId(1, null));
         return "fakesPage";
     }
 
@@ -103,7 +107,57 @@ public class fakeController {
                                     final Model model)
     {
         model.addAttribute("users", userRepo);
-        model.addAttribute("fakes", fakeRepo.findFakeByCategoryId(category));
+        model.addAttribute("fakes", fakeRepo.findFakeByCategoryIdAndAdminId(category, null));
         return "fakesPage";
+    }
+
+    @GetMapping("/fakePage/{id}")
+    public String getFakePage(@PathVariable("id") final Integer fakeId,
+                              final Model model)
+    {
+        Fake currentFake = fakeRepo.findFakeById(fakeId);
+        model.addAttribute("fake", currentFake);
+        model.addAttribute("news", newsRepo.findNewsById(currentFake.getNewsId()));
+        model.addAttribute("user",
+                userRepo.findUserById(newsRepo.findNewsById(currentFake.getNewsId()).getAuthorId()).getUsername());
+        model.addAttribute("image", imageNewsRepo.findAllByNewsId(currentFake.getNewsId()).size() != 0 ?
+                imageNewsRepo.findAllByNewsId((currentFake.getNewsId())).get(0).getImageUrl() : null);
+        model.addAttribute("files", fileFakeRepo.findFileFakeByFakeId(fakeId));     //TODO: файлы не отображаются
+        return "fakePage";
+    }
+
+    @GetMapping("/notAcceptFake/{id}")
+    public String notAcceptFake(@PathVariable("id") final Integer fakeId)
+    {
+        Fake currentFake = fakeRepo.findFakeById(fakeId);
+        currentFake.setAdminId(getAuthUserId());
+        currentFake.setTrue(false);
+        fakeRepo.save(currentFake);
+        News fakeNews = newsRepo.findNewsById(fakeRepo.findFakeById(fakeId).getNewsId());
+        fakeNews.setBlocked(false);
+        newsRepo.save(fakeNews);
+        //TODO: снижение рейтинга для пользователя, который нашел фейк
+        return "redirect:/";
+    }
+
+    @GetMapping("/acceptFake/{id}")
+    public String acceptFake(@PathVariable("id") final Integer fakeId)
+    {
+        Fake currentFake = fakeRepo.findFakeById(fakeId);
+        currentFake.setAdminId(getAuthUserId());
+        currentFake.setTrue(true);
+        fakeRepo.save(currentFake);
+        Notification newNotification = new Notification();
+        News currentNews = newsRepo.findNewsById(fakeRepo.findFakeById(fakeId).getNewsId());
+        newNotification.setName("Your news is fake");
+        newNotification.setText("Please, edit your news or delete it. " +
+                "http://localhost:8081/newsPage/" + currentNews.getId());
+        newNotification.setUserId(currentNews.getAuthorId());
+        notificationRepo.save(newNotification);
+        for(Fake fake : fakeRepo.findFakeByNewsIdAndIsTrueFalse(fakeRepo.findFakeById(fakeId).getNewsId()))
+        {
+            //TODO: повышение рейтинга для пользователя, который нашел фейк и снизить для неправильного админа
+        }
+        return "redirect:/";
     }
 }

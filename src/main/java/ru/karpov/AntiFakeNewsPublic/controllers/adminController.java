@@ -82,7 +82,6 @@ public class adminController {
         newNotification.setName(name);
         newNotification.setText(notification);
         newNotification.setUserId(id);
-
         notificationRepo.save(newNotification);
         return "redirect:/userListPage";
     }

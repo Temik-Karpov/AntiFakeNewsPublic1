@@ -8,5 +8,7 @@ import java.util.List;
 
 @Repository
 public interface fakeRepo extends JpaRepository<Fake, Long> {
-    List<Fake> findFakeByCategoryId(final Integer categoryId);
+    List<Fake> findFakeByCategoryIdAndAdminId(final Integer categoryId, final String userId);
+    Fake findFakeById(final Integer id);
+    List<Fake> findFakeByNewsIdAndIsTrueFalse(final Integer newsId);
 }

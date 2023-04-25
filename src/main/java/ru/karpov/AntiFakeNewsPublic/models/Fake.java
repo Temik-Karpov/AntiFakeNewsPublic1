@@ -12,10 +12,19 @@ public class Fake {
     private Integer id;
     private Integer newsId;
     private String userId;
+    private String adminId;
     private String name;
     private String text;
     private Boolean isTrue;
     private Integer categoryId;
+
+    public String getAdminId() {
+        return adminId;
+    }
+
+    public void setAdminId(final String adminId) {
+        this.adminId = adminId;
+    }
 
     public Integer getCategoryId() {
         return categoryId;

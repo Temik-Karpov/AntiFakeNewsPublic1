@@ -14,10 +14,10 @@
         <label class="form-label">Title</label>
         <div class="input-group has-validation">
             <div th:if="${publication != 0}">
-                <input type="text" class="form-control" name="Title" placeholder="Title" th:value="${publication.getName()}">
+                <input type="text" class="form-control" name="Title" placeholder="Title" th:value="${publication.getName()}" required>
             </div>
             <div th:if="${publication == 0}">
-                <input type="text" class="form-control" name="Title" placeholder="Title">
+                <input type="text" class="form-control" name="Title" placeholder="Title" required>
             </div>
         </div>
     </div>
@@ -27,10 +27,10 @@
         <label class="form-label">Text</label>
         <div class="input-group has-validation">
             <div th:if="${publication != 0}">
-                <textarea name="text" th:text="${publication.getText()}"></textarea>
+                <textarea name="text" th:text="${publication.getText()}" required></textarea>
             </div>
             <div th:if="${publication == 0}">
-                <textarea name="text"></textarea>
+                <textarea name="text" required></textarea>
             </div>
         </div>
     </div>
