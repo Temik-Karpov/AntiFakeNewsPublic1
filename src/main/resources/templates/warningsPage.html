@@ -12,7 +12,7 @@
     <h1 class="display-4 fw-normal">Warnings</h1>
 </div>
 <hr class="my-4">
-<div th:if="${warnings.size() == 0}" class="text-center">
+<!--<div th:if="${warnings.size() == 0}" class="text-center">
     <h2 class="display-4 fw-normal">There is no warnings</h2>
 </div>
 <div th:if="${warnings.size() != 0}">
@@ -21,6 +21,17 @@
             <p th:text="${warning.getText()}"></p>
             <hr class="my-4">
         </div>
+</div>-->
+    <h3>Ваша новость - фейк.</h3>
+    <p>Пожалуйста, удалите или изменить данную новость: <a th:href="${warnings.size()}">Новость</a></p>
+    <p>Новость в данный момент заблокирована.</p>
+    <hr class="my-4">
+    <h3>Запрещенные слова в новости</h3>
+    <p>Пожалуйста, удалите или изменить данную новость: <a th:href="${warnings.size()}">Новость</a></p>
+    <p>Она содержит неприличные слова.</p>
+    <hr class="my-4">
+    </div>
+
 </div>
 </div>
 </body>

@@ -32,21 +32,34 @@
     <div>
         <div class="bd-example text-center">
             <p class="h3" th:text="${fake.getText()}"></p>
-            <hr class="my-4">
+            <!--<hr class="my-4">
             <small class="text-muted">
                 <a th:href="@{/profilePage/{id}(id = ${fake.getUserId()})}">Author</a><br>
-            </small>
+            </small>-->
         </div>
     </div>
     <hr class="my-4">
     <h3>Files:</h3>
+    <!--<h4 th:if="${files.size() == 0}">There is no files</h4>-->
+    <ul>
+        <li>
+            <a th:href="${file}" target="_blank">Файл 1</a>
+        </li>
+        <li>
+            <a th:href="${file}" target="_blank">Файл 2</a>
+        </li>
+    </ul>
     <ul>
         <li th:each="file : ${files}">
             <a th:href="${file}" target="_blank" th:text="${file}"></a>
         </li>
     </ul>
-    <a th:href="@{/acceptFake/{id}(id = ${fake.getId()})}">Accept</a><br>
-    <a th:href="@{/notAcceptFake/{id}(id = ${fake.getId()})}">Wrong proofs</a><br>
+    <button type="button" class="btn btn-primary text-center btn-lg" style="margin-bottom: 10px; margin-left: 550px">Accept proofs</button><br>
+    <button type="button" class="btn btn-primary text-center btn-lg" style="margin-bottom: 10px; margin-left: 550px">Wrong proofs</button>
+    <!--<button class="w-100 btn btn-primary"
+            type="submit" th:action="@{/acceptFake/{id}(id = ${fake.getId()})}">Accept</button><br>
+    <button class="w-100 btn btn-primary"
+            type="submit" th:action="@{/notAcceptFake/{id}(id = ${fake.getId()})}">Wrong proofs</button><br>-->
 </div>
 </body>
 </html>

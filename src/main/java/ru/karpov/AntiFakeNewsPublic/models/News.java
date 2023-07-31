@@ -18,6 +18,21 @@ public class News {
     private Integer categoryId;
     private Boolean isBlocked;
 
+    public News(final String name, final Integer categoryId,
+                final String text, final Date date,
+                final String authorId, final Boolean isBlocked) {
+        this.name = name;
+        this.authorId = authorId;
+        this.categoryId = categoryId;
+        this.text = text;
+        this.date = date;
+        this.isBlocked = isBlocked;
+
+    }
+
+    public News() {
+
+    }
 
     public Integer getCategoryId() {
         return categoryId;

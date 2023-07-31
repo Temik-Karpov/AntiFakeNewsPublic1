@@ -7,26 +7,26 @@
 </head>
 <body>
 <header th:insert="header :: header"></header>
-<h4 class="mb-3">Prove it</h4>
-<p>Describe your guesses in as much detail as possible, attaching the necessary documents (photos, videos, files, etc.)</p>
+<h4 style="margin-left: 100px" class="mb-3">Prove it</h4>
+<p style="margin-left: 100px">Describe your guesses in as much detail as possible, attaching the necessary documents (photos, videos, files, etc.)</p>
 <hr class="my-4">
 <form class="needs-validation" th:action="@{/addFake/{id}(id=${newsId})}" method="post" enctype="multipart/form-data">
     <div class="col-sm-6">
-        <label class="form-label">Problem</label>
+        <label style="margin-left: 100px" class="form-label">Problem</label>
         <div class="input-group has-validation">
-                <input type="text" class="form-control" name="Title" placeholder="Briefly describe the problem" required>
+                <input style="margin-left: 100px" type="text" class="form-control" name="Title" placeholder="Briefly describe the problem" required>
         </div>
     </div>
     <br>
 
     <div class="col-sm-6">
-        <label class="form-label">Proofs</label>
+        <label style="margin-left: 100px" class="form-label">Proofs</label>
         <div class="input-group has-validation">
-                <textarea name="text" required></textarea><br>
-                <input type="file" name="files" id="files" multiple>
+                <textarea style="margin-left: 100px" name="text" required></textarea>
         </div>
     </div>
     <br>
+    <input style="margin-left: 100px" type="file" name="files" id="files" multiple>
     <div class="text-danger">
         <p th:if="${nullError == 1}">Enter information</p>
     </div>

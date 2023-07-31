@@ -7,39 +7,39 @@
 </head>
 <body>
 <header th:insert="header :: header"></header>
-<h4 class="mb-3">Add your publication</h4>
+<h4 style="margin-left: 100px" class="mb-3">Add your publication</h4>
 <hr class="my-4">
 <form class="needs-validation" action="/addNews" method="post" enctype="multipart/form-data">
     <div class="col-sm-6">
-        <label class="form-label">Title</label>
+        <label style="margin-left: 100px" class="form-label">Title</label>
         <div class="input-group has-validation">
             <div th:if="${publication != 0}">
-                <input type="text" class="form-control" name="Title" placeholder="Title" th:value="${publication.getName()}" required>
+                <input style="margin-left: 100px" type="text" class="form-control" name="Title" placeholder="Title" th:value="${publication.getName()}" required>
             </div>
             <div th:if="${publication == 0}">
-                <input type="text" class="form-control" name="Title" placeholder="Title" required>
+                <input style="margin-left: 100px" type="text" class="form-control" name="Title" placeholder="Title" required>
             </div>
         </div>
     </div>
     <br>
 
     <div class="col-sm-6">
-        <label class="form-label">Text</label>
+        <label style="margin-left: 100px" class="form-label">Text</label>
         <div class="input-group has-validation">
             <div th:if="${publication != 0}">
-                <textarea name="text" th:text="${publication.getText()}" required></textarea>
+                <textarea style="margin-left: 100px" name="text" th:text="${publication.getText()}" required></textarea>
             </div>
             <div th:if="${publication == 0}">
-                <textarea name="text" required></textarea>
+                <textarea style="margin-left: 100px" name="text" required></textarea>
             </div>
         </div>
     </div>
     <br>
 
     <div class="col-sm-6">
-        <label class="form-label">Text</label>
+        <label style="margin-left: 100px" class="form-label">Text</label>
         <div class="input-group has-validation">
-            <select name="category" id="category" required>
+            <select style="margin-left: 100px" name="category" id="category" required>
                 <option value = 1>Sport</option>
                 <option value = 2>Culture</option>
                 <option value = 3>Economic</option>S
@@ -53,7 +53,7 @@
         <p th:if="${nullError == 1}">Enter information</p>
     </div>
 
-    <input type="file" name="photo" id="photo" th:multiple>
+    <input style="margin-left: 100px" type="file" name="photo" id="photo" th:multiple><br>
     <button class="w-100 btn btn-primary btn-lg" type="submit">Add news</button>
 </form>
 <hr class="my-4">
