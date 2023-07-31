@@ -14,6 +14,16 @@ public class Mark {
     private String userId;
     private Integer mark;
 
+    public Mark(final Integer newsId, final String userId, final Integer mark) {
+        this.newsId = newsId;
+        this.userId = userId;
+        this.mark = mark;
+    }
+
+    public Mark() {
+
+    }
+
     public Integer getMark() {
         return mark;
     }

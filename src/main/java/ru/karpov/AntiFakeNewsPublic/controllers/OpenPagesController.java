@@ -45,7 +45,7 @@ public class OpenPagesController extends mainController {
         return "authProfilePage";
     }
 
-    private String checkUserAvailabilityInSystem()
+    public String checkUserAvailabilityInSystem()
     {
         if(userRepo.findUserById(getAuthUserId()) == null)
             return "redirect:/addUserInfoPage";

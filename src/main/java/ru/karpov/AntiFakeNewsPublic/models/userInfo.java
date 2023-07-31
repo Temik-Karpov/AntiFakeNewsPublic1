@@ -16,6 +16,23 @@ public class userInfo {
     private Integer countOfPublications;
     private Double averageMark;
 
+    public userInfo(final String id, final String username,
+                    final String email, final String description,
+                    final Double searchFakeRating, final Double fixFakeRating,
+                    final Integer countOfPublications) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.description = description;
+        this.searchFakeRating = searchFakeRating;
+        this.fixFakeRating = fixFakeRating;
+        this.countOfPublications = countOfPublications;
+    }
+
+    public userInfo() {
+
+    }
+
     public Double getAverageMark() {
         return averageMark;
     }
