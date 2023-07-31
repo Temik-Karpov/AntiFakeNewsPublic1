@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import ru.karpov.AntiFakeNewsPublic.models.Mark;
 import ru.karpov.AntiFakeNewsPublic.models.News;
 import ru.karpov.AntiFakeNewsPublic.models.Subscription;
 import ru.karpov.AntiFakeNewsPublic.models.userInfo;
@@ -14,7 +15,6 @@ import ru.karpov.AntiFakeNewsPublic.repos.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -38,67 +38,81 @@ public class OpenPagesController extends mainController {
     @GetMapping("/authProfilePage")
     public String getAuthProfilePage(final Model model)
     {
-        final userInfo authUser = userRepo.findUserById(getAuthUserId());
-        if(authUser != null)
-        {
-            model.addAttribute("user", authUser);
-            model.addAttribute("publications", newsRepo.findNewsByAuthorId(getAuthUserId()));
-            model.addAttribute("users", userRepo);
-            return "authProfilePage";
-        }
+        final String returnedValue = checkUserAvailabilityInSystem();
+        model.addAttribute("user", userRepo.findUserById(getAuthUserId()));
+        model.addAttribute("publications", newsRepo.findNewsByAuthorId(getAuthUserId()));
+        model.addAttribute("users", userRepo);
+        return "authProfilePage";
+    }
+
+    private String checkUserAvailabilityInSystem()
+    {
+        if(userRepo.findUserById(getAuthUserId()) == null)
+            return "redirect:/addUserInfoPage";
+        return null;
+    }
+
+    @GetMapping("/addUserInfoPage")
+    public String getAuthProfilePage()
+    {
         return "addUserInfoPage";
     }
 
     @PostMapping("/reloadMainPage")
-    public String getReloadMainPage(@RequestParam("category") final Integer category,
+    public String getReloadMainWithNewCategoryPage(@RequestParam("category") final Integer category,
                                     final Model model)
     {
         model.addAttribute("users", userRepo);
-        if(category != 0) {
-            model.addAttribute("publications", newsRepo.findNewsByCategoryIdAndIsBlockedFalse(category));
-        }
-        else
-        {
-            model.addAttribute("publications", newsRepo.findNewsByIsBlockedFalse());
-        }
+        model.addAttribute("publications", getListOfNewsAtMainPageWithNewCategory(category));
         return "mainPage";
     }
 
+    private List<News> getListOfNewsAtMainPageWithNewCategory(final Integer category)
+    {
+        if(category != 0) {
+            return newsRepo.findNewsByCategoryIdAndIsBlockedFalse(category);
+        }
+        else {
+            return newsRepo.findNewsByIsBlockedFalse();
+        }
+    }
+
     @PostMapping("/reloadAuthProfilePage")
-    public String reloadAuthProfilePage(@RequestParam("category") final Integer category,
+    public String reloadAuthProfileWithNewCategoryPage(@RequestParam("category") final Integer category,
                                         final Model model)
     {
-        final userInfo authUser = userRepo.findUserById(getAuthUserId());
         model.addAttribute("users", userRepo);
-        model.addAttribute("user", authUser);
-        if(category != 0) {
-            model.addAttribute("publications",
-                    newsRepo.findNewsByCategoryIdAndAuthorId(category, getAuthUserId()));
-        }
-        else
-        {
-            List<News> pub;
-            pub = newsRepo.findAll();
-            Collections.reverse(pub);
-            model.addAttribute("publications", newsRepo.findNewsByAuthorId(getAuthUserId()));
-        }
+        model.addAttribute("user", userRepo.findUserById(getAuthUserId()));
+        model.addAttribute("publications", getListOfNewsAtAuthProfilePageWithNewCategory(category));
         return "authProfilePage";
+    }
+
+    private List<News> getListOfNewsAtAuthProfilePageWithNewCategory(final Integer category)
+    {
+        if(category != 0) {
+            return newsRepo.findNewsByCategoryIdAndAuthorId(category, getAuthUserId());
+        }
+        else {
+            return newsRepo.findNewsByAuthorId(getAuthUserId());
+        }
     }
 
     @GetMapping("/subscriptionsPage")
     public String getSubscriptionsPage(final Model model)
     {
-        if(userRepo.findUserById(getAuthUserId()) == null)
-        {
-            return "addUserInfoPage";
-        }
+        final String returnedValue = checkUserAvailabilityInSystem();
+        model.addAttribute("subscribes", getUserSubscriptions());
+        return "subscriptionsPage";
+    }
+
+    private List<userInfo> getUserSubscriptions()
+    {
         final List<userInfo> subscribeUsers = new ArrayList<>();
         for (Subscription subscribe : subscribeRepo.findSubscriptionByUserId(getAuthUserId()))
         {
             subscribeUsers.add(userRepo.findUserById(subscribe.getUserSubscribeId()));
         }
-        model.addAttribute("subscribes", subscribeUsers);
-        return "subscriptionsPage";
+        return subscribeUsers;
     }
 
     @GetMapping("/profilePage/{usernameId}")
@@ -113,15 +127,13 @@ public class OpenPagesController extends mainController {
         {
             return "authProfilePage";
         }
-        if(subscribeRepo.findSubscriptionByUserSubscribeIdAndAndUserId(user.getId(), getAuthUserId()) != null)
-        {
-            model.addAttribute("isSub", 1);
-        }
-        else
-        {
-            model.addAttribute("isSub", 0);
-        }
+        model.addAttribute("isSub", checkSubscriptionOnCurrentUser(user));
         return "profilePage";
+    }
+
+    private Subscription checkSubscriptionOnCurrentUser(final userInfo user)
+    {
+        return subscribeRepo.findSubscriptionByUserSubscribeIdAndAndUserId(user.getId(), getAuthUserId());
     }
 
     @GetMapping("/logout")
@@ -139,20 +151,19 @@ public class OpenPagesController extends mainController {
                 userRepo.findUserById(newsRepo.findNewsById(id).getAuthorId()).getUsername());
         model.addAttribute("image", imageNewsRepo.findAllByNewsId(id).size() != 0 ?
         imageNewsRepo.findAllByNewsId(id).get(0).getImageUrl() : null);
-        if(newsRepo.findNewsById(id).getAuthorId().equals(getAuthUserId()))
-        {
-            model.addAttribute("edit", 1);
-        }
-        else
-        {
-            model.addAttribute("edit", 0);
-        }
-        if (markRepo.findMarkByUserIdAndNewsId(getAuthUserId(), id) != null) {
-            model.addAttribute("rate", 1);
-        } else {
-            model.addAttribute("rate", 0);
-        }
+        model.addAttribute("edit", isItOurNews(id));
+        model.addAttribute("rate", isNewsAppreciated(id));
         return "newsPage";
+    }
+
+    private Mark isNewsAppreciated(final Integer id)
+    {
+        return markRepo.findMarkByUserIdAndNewsId(getAuthUserId(), id);
+    }
+
+    private Boolean isItOurNews(final Integer id)
+    {
+        return newsRepo.findNewsById(id).getAuthorId().equals(getAuthUserId());
     }
 
     @PostMapping("/reloadProfilePage/{userId}")
@@ -160,35 +171,28 @@ public class OpenPagesController extends mainController {
                                     @RequestParam("category") final Integer category,
                                     final  Model model)
     {
-        userInfo user = userRepo.findUserById(userId);
         model.addAttribute("users", userRepo);
-        model.addAttribute("user", user);
-        if(category != 0) {
-            model.addAttribute("publications",
-                    newsRepo.findNewsByCategoryIdAndAuthorIdAndIsBlockedIsFalse(category, userId));
-        }
-        else
-        {
-            model.addAttribute("publications", newsRepo.findNewsByAuthorIdAndIsBlockedIsFalse(userId));
-        }
+        model.addAttribute("user", userRepo.findUserById(userId));
+        model.addAttribute("publications", getListOfNewsAtProfilePageWithNewCategory(category, userId));
         return "profilePage";
+    }
+
+    private List<News> getListOfNewsAtProfilePageWithNewCategory(final Integer category, final String userId)
+    {
+        if(category != 0) {
+            return newsRepo.findNewsByCategoryIdAndAuthorIdAndIsBlockedIsFalse(category, userId);
+        }
+        else {
+            return newsRepo.findNewsByAuthorIdAndIsBlockedIsFalse(userId);
+        }
     }
 
     @GetMapping("/addNewsPage")
     public String getAddNewsPage(final Model model)
     {
-        if(userRepo.findUserById(getAuthUserId()) == null)
-        {
-            return "addUserInfoPage";
-        }
+        final String returnedValue = checkUserAvailabilityInSystem();
         model.addAttribute("publication", 0);
         return "addNewsPage";
-    }
-
-    @GetMapping("/addUserInfoPage")
-    public String getAddUserInfoPage()
-    {
-        return "addUserInfoPage";
     }
 
     @GetMapping("/warningsPage")

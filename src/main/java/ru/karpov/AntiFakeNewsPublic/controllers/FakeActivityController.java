@@ -1,8 +1,5 @@
 package ru.karpov.AntiFakeNewsPublic.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,32 +18,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-
 @Controller
-public class fakeController {
+public class FakeActivityController extends mainController {
 
-    private final userRepo userRepo;
-    private final newsRepo newsRepo;
     private final fakeRepo fakeRepo;
     private final fileFakeRepo fileFakeRepo;
-    private final imageNewsRepo imageNewsRepo;
-    private final notificationRepo notificationRepo;
 
-    @Autowired
-    fakeController(final userRepo userRepo, final newsRepo newsRepo, final fakeRepo fakeRepo,
-                   final fileFakeRepo fileFakeRepo, final imageNewsRepo imageNewsRepo, final ru.karpov.AntiFakeNewsPublic.repos.notificationRepo notificationRepo) {
-        this.newsRepo = newsRepo;
-        this.userRepo = userRepo;
+    public FakeActivityController(final userRepo userRepo, final newsRepo newsRepo,
+                                  final subscriptionRepo subscribeRepo, final markRepo markRepo,
+                                  final imageNewsRepo imageNewsRepo, final notificationRepo notificationRepo,
+                                  final fakeRepo fakeRepo, final fileFakeRepo fileFakeRepo) {
+        super(userRepo, newsRepo, subscribeRepo, markRepo, imageNewsRepo, notificationRepo);
         this.fakeRepo = fakeRepo;
         this.fileFakeRepo = fileFakeRepo;
-        this.imageNewsRepo = imageNewsRepo;
-        this.notificationRepo = notificationRepo;
     }
 
-    private String getAuthUserId() {
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getName();
-    }
 
     @GetMapping("/addFakePage/{newsId}")
     public String getAddFakePage(@PathVariable("newsId") final Integer newsId,
@@ -98,7 +84,7 @@ public class fakeController {
     public String getFakesPage(final Model model)
     {
         model.addAttribute("users", userRepo);
-        model.addAttribute("fakes", fakeRepo.findFakeByCategoryIdAndAdminId(1, null));
+        model.addAttribute("fakes", fakeRepo.findFakeByAdminId(null));
         return "fakesPage";
     }
 

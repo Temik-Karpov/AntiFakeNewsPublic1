@@ -29,7 +29,6 @@ public class mainController {
         this.notificationRepo = notificationRepo;
     }
 
-
     protected String getAuthUserId()
     {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

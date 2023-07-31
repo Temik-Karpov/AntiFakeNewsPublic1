@@ -20,12 +20,12 @@
 
 
     <div th:if="${#request.isUserInRole('USER')}">
-        <div th:if="${isSub == 0 || isSub == null}">
+        <div th:if="${isSub == null}">
             <form th:action="@{/subscribeUser/{id}(id=${user.getId()})}" method="get">
                 <button class="w-100 btn btn-primary btn-lg" type="submit">Subscribe</button>
             </form>
         </div>
-        <div th:if="${isSub == 1}">
+        <div th:if="${isSub != null}">
             <form th:action="@{/unsubscribeUser/{id}(id=${user.getId()})}" method="get">
                 <button class="w-100 btn btn-primary btn-lg" type="submit">Unsubscribe</button>
             </form>

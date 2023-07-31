@@ -1,8 +1,5 @@
 package ru.karpov.AntiFakeNewsPublic.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,29 +18,12 @@ import java.time.Instant;
 import java.util.Date;
 
 @Controller
-public class workController {
+public class UserActivityController extends mainController {
 
-    private final userRepo userRepo;
-    private final newsRepo newsRepo;
-    private final subscriptionRepo subscribeRepo;
-    private final markRepo markRepo;
-    private final imageNewsRepo imageNewsRepo;
-
-    @Autowired
-    public workController(final userRepo userRepo, final newsRepo newsRepo, final subscriptionRepo subscribeRepo,
-                          final markRepo markRepo, final imageNewsRepo imageNewsRepo)
-    {
-        this.userRepo = userRepo;
-        this.newsRepo = newsRepo;
-        this.subscribeRepo = subscribeRepo;
-        this.markRepo = markRepo;
-        this.imageNewsRepo = imageNewsRepo;
-    }
-
-    private String getAuthUserId()
-    {
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getName();
+    public UserActivityController(final userRepo userRepo, final newsRepo newsRepo,
+                                  final subscriptionRepo subscribeRepo, final markRepo markRepo,
+                                  final imageNewsRepo imageNewsRepo, final notificationRepo notificationRepo) {
+        super(userRepo, newsRepo, subscribeRepo, markRepo, imageNewsRepo, notificationRepo);
     }
 
     @PostMapping("/addNews")
@@ -61,13 +41,8 @@ public class workController {
             model.addAttribute("publication", 0);
             return "addNewsPage";
         }
-        News news = new News();
-        news.setName(title);
-        news.setCategoryId(category);
-        news.setText(text);
-        news.setDate(Date.from(Instant.now()));
-        news.setAuthorId(getAuthUserId());
-        news.setBlocked(false);
+        News news = new News(title, category, text, Date.from(Instant.now()),
+                getAuthUserId(), false);
         newsRepo.save(news);
         userInfo user = userRepo.findUserById(getAuthUserId());
         user.increaseCountOfPublications();

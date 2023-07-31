@@ -28,7 +28,7 @@
                 <a th:href="@{/deleteNews/{id}(id=${news.getId()})}">Delete publication</a><br>
             </div>
             <div th:if="${edit == 0}">
-                <div th:if="${rate == 0}">
+                <div th:if="${rate == null}">
                     <form th:action="@{/rateNews/{id}(id=${news.getId()})}" method="post">
                         <select name="mark" id="mark" required>
                             <option>1</option>

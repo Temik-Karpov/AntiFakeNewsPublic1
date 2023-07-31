@@ -1,6 +1,5 @@
 package ru.karpov.AntiFakeNewsPublic.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,25 +11,12 @@ import ru.karpov.AntiFakeNewsPublic.models.Notification;
 import ru.karpov.AntiFakeNewsPublic.repos.*;
 
 @Controller
-public class adminController {
-    private newsRepo newsRepo;
-    private userRepo userRepo;
-    private imageNewsRepo imageNewsRepo;
-    private subscriptionRepo subscribeRepo;
-    private markRepo markRepo;
-    private notificationRepo notificationRepo;
+public class AdminActivityController extends mainController {
 
-    @Autowired
-    public adminController(final userRepo userRepo, final newsRepo newsRepo, final subscriptionRepo subscribeRepo,
-                          final markRepo markRepo, final imageNewsRepo imageNewsRepo,
-                           final notificationRepo notificationRepo)
-    {
-        this.userRepo = userRepo;
-        this.newsRepo = newsRepo;
-        this.subscribeRepo = subscribeRepo;
-        this.markRepo = markRepo;
-        this.imageNewsRepo = imageNewsRepo;
-        this.notificationRepo = notificationRepo;
+    public AdminActivityController(final userRepo userRepo, final newsRepo newsRepo,
+                                   final subscriptionRepo subscribeRepo, final markRepo markRepo,
+                                   final imageNewsRepo imageNewsRepo, final notificationRepo notificationRepo) {
+        super(userRepo, newsRepo, subscribeRepo, markRepo, imageNewsRepo, notificationRepo);
     }
 
     @GetMapping("/userListPage")
