@@ -78,11 +78,28 @@ public class UserActivityController extends OpenPagesController {
     }
 
     @GetMapping("/deleteNews/{id}")
-    public String deleteNews(@PathVariable("id") final Integer id)
-    {
+    public String deleteNews(@PathVariable("id") final Integer id) {
         newsRepo.delete(newsRepo.findNewsById(id));
-        imageNewsRepo.deleteAll(imageNewsRepo.findAllByNewsId(id));     //todo: удаление картинок из path
+        deleteImageNewsFromPathAndRepo(id);
         return "redirect:/";
+    }
+
+    private void deleteImageNewsFromPathAndRepo(final Integer id) {
+        for(imageNews image : imageNewsRepo.findAllByNewsId(id))
+        {
+            final Path data = Paths.get(image.getImageUrl());
+            deleteImageNewsFromPath(data);
+        }
+        imageNewsRepo.deleteAll(imageNewsRepo.findAllByNewsId(id));
+    }
+
+    private void deleteImageNewsFromPath(final Path data)
+    {
+        try {
+            Files.delete(data);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @GetMapping("/editNews/{id}")
