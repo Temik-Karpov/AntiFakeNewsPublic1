@@ -30,6 +30,14 @@ public class AdminActivityController extends mainController {
     public String deleteUser(@PathVariable("id") final String id)
     {
         userRepo.delete(userRepo.findUserById(id));
+        deleteUserNews(id);
+        deleteUserSubscribe(id);
+        deleteUserMarks(id);
+        return "forward:/userListPage";
+    }
+
+    private void deleteUserNews(final String id)
+    {
         if(newsRepo.findNewsByAuthorId(id) != null) {
             newsRepo.deleteAll(newsRepo.findNewsByAuthorId(id));
             for (News news : newsRepo.findNewsByAuthorId(id)) {
@@ -37,11 +45,18 @@ public class AdminActivityController extends mainController {
                     imageNewsRepo.deleteAll(imageNewsRepo.findAllByNewsId(news.getId()));
             }
         }
+    }
+
+    private void deleteUserSubscribe(final String id)
+    {
         if(subscribeRepo.findSubscriptionByUserId(id) != null)
             subscribeRepo.deleteAll(subscribeRepo.findSubscriptionByUserId(id));
+    }
+
+    private void deleteUserMarks(final String id)
+    {
         if(markRepo.findMarkByUserId(id) != null)
             markRepo.deleteAll(markRepo.findMarkByUserId(id));
-        return "forward:/userListPage";
     }
 
     @GetMapping("/notifyUserPage/{id}")
@@ -56,19 +71,29 @@ public class AdminActivityController extends mainController {
     public String sendNotification(@PathVariable("id") final String id,
                                    @RequestParam("name") final String name,
                                    @RequestParam("notification") final String notification,
-                                   Model model)
+                                   final Model model)
+    {
+        isNameAndNotificationEmpty(id, name, notification, model);
+        Notification newNotification = new Notification(id, name, notification);
+        notificationRepo.save(newNotification);
+        return "redirect:/userListPage";
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private void isNameAndNotificationEmpty(final String id, final String name,
+                                            final String notification, final Model model)
     {
         if(name.isEmpty() || notification.isEmpty())
         {
             model.addAttribute("id", id);
             model.addAttribute("nullError", 1);
-            return "notificationPage";
+            getNotificationPage();
         }
-        Notification newNotification = new Notification();
-        newNotification.setName(name);
-        newNotification.setText(notification);
-        newNotification.setUserId(id);
-        notificationRepo.save(newNotification);
-        return "redirect:/userListPage";
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    private String getNotificationPage()
+    {
+        return "notificationPage";
     }
 }

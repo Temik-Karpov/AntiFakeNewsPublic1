@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Controller
-public class FakeActivityController extends mainController {
+public class FakeActivityController extends UserActivityController {
 
     private final fakeRepo fakeRepo;
     private final fileFakeRepo fileFakeRepo;
@@ -47,37 +47,56 @@ public class FakeActivityController extends mainController {
                           @RequestParam("text") final String proofs,
                           @RequestParam("files") final MultipartFile[] files,
                           Model model) throws IOException {
-        if (userRepo.findUserById(getAuthUserId()) == null) {
-            return "addUserInfoPage";
-        }
-        if (problem.isEmpty() || proofs.isEmpty()) {
-            model.addAttribute("nullError", 1);
-            return "addFakePage";
-        }
-
+        checkUserAvailabilityInSystem();
+        isProblemAndProofsEmpty(problem, proofs, model);
         Fake newFake = new Fake(newsId, getAuthUserId(), problem, proofs,
                 newsRepo.findNewsById(newsId).getCategoryId());
+        addFilesIntoFake(files, newFake);
         fakeRepo.save(newFake);
+        blockNews(newsId);
+        return "redirect:/";
+    }
 
-            for (MultipartFile file : files) {
-                if(file.getBytes().length > 0) {
-                    StringBuilder fileNames = new StringBuilder();
-                    Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/fakeFiles",
-                            file.getOriginalFilename());
-                    //Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/fakeFiles",
-                    // file.getOriginalFilename());
-                    fileNames.append(file.getOriginalFilename());
-                    Files.write(fileNameAndPath, file.getBytes());
-                    final fileFake fileFake = new fileFake();
-                    fileFake.setFileUrl("/fakeFiles/" + file.getOriginalFilename());
-                    fileFake.setFakeId(newFake.getId());
-                    fileFakeRepo.save(fileFake);
-                }
-            }
+    private void blockNews(final Integer newsId)
+    {
         News currentNews = newsRepo.findNewsById(newsId);
         currentNews.setBlocked(true);
         newsRepo.save(currentNews);
-        return "redirect:/";
+    }
+
+    @SuppressWarnings("MismatchedQueryAndUpdateOfStringBuilder")
+    private void addFilesIntoFake(final MultipartFile[] files, final Fake newFake) throws IOException {
+        for (MultipartFile file : files) {
+            if(file.getBytes().length > 0) {
+                StringBuilder fileNames = new StringBuilder();
+                Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/fakeFiles",
+                        file.getOriginalFilename());
+                //Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/fakeFiles",
+                // file.getOriginalFilename());
+                fileNames.append(file.getOriginalFilename());
+                Files.write(fileNameAndPath, file.getBytes());
+                final fileFake fileFake = new fileFake();
+                fileFake.setFileUrl("/fakeFiles/" + file.getOriginalFilename());
+                fileFake.setFakeId(newFake.getId());
+                fileFakeRepo.save(fileFake);
+            }
+        }
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private void isProblemAndProofsEmpty(final String problem, final String proofs,
+                                           final Model model)
+    {
+        if (problem.isEmpty() || proofs.isEmpty()) {
+            model.addAttribute("nullError", 1);
+            getAddFakePage();
+        }
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    private String getAddFakePage()
+    {
+        return "addFakePage";
     }
 
     @GetMapping("/fakesPage")
@@ -133,6 +152,16 @@ public class FakeActivityController extends mainController {
         currentFake.setAdminId(getAuthUserId());
         currentFake.setTrue(true);
         fakeRepo.save(currentFake);
+        sendNotification(fakeId);
+        for(Fake fake : fakeRepo.findFakeByNewsIdAndIsTrueFalse(fakeRepo.findFakeById(fakeId).getNewsId()))
+        {
+            //TODO: повышение рейтинга для пользователя, который нашел фейк и снизить для неправильного админа
+        }
+        return "redirect:/";
+    }
+
+    private void sendNotification(final Integer fakeId)
+    {
         Notification newNotification = new Notification();
         News currentNews = newsRepo.findNewsById(fakeRepo.findFakeById(fakeId).getNewsId());
         newNotification.setName("Your news is fake");
@@ -140,10 +169,5 @@ public class FakeActivityController extends mainController {
                 "http://localhost:8081/newsPage/" + currentNews.getId());
         newNotification.setUserId(currentNews.getAuthorId());
         notificationRepo.save(newNotification);
-        for(Fake fake : fakeRepo.findFakeByNewsIdAndIsTrueFalse(fakeRepo.findFakeById(fakeId).getNewsId()))
-        {
-            //TODO: повышение рейтинга для пользователя, который нашел фейк и снизить для неправильного админа
-        }
-        return "redirect:/";
     }
 }

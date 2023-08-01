@@ -14,6 +14,17 @@ public class Notification {
     private String name;
     private String text;
 
+    public Notification(final String userId, final String name,
+                        final String text) {
+        this.userId = userId;
+        this.name = name;
+        this.text = text;
+    }
+
+    public Notification() {
+
+    }
+
     public Integer getId() {
         return id;
     }

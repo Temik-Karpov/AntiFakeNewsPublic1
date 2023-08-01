@@ -58,6 +58,7 @@ public class UserActivityController extends OpenPagesController {
         return "addNewsPage";
     }
 
+    @SuppressWarnings("MismatchedQueryAndUpdateOfStringBuilder")
     private void addFilesToNews(final MultipartFile[] files, final News news) throws IOException {
         for (MultipartFile file : files) {
             if(file.getBytes().length > 0) {
