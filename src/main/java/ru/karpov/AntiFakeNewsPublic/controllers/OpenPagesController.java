@@ -38,18 +38,24 @@ public class OpenPagesController extends mainController {
     @GetMapping("/authProfilePage")
     public String getAuthProfilePage(final Model model)
     {
-        final String returnedValue = checkUserAvailabilityInSystem();
+        checkUserAvailabilityInSystem();
         model.addAttribute("user", userRepo.findUserById(getAuthUserId()));
         model.addAttribute("publications", newsRepo.findNewsByAuthorId(getAuthUserId()));
         model.addAttribute("users", userRepo);
         return "authProfilePage";
     }
 
-    public String checkUserAvailabilityInSystem()
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    protected void checkUserAvailabilityInSystem()
     {
         if(userRepo.findUserById(getAuthUserId()) == null)
-            return "redirect:/addUserInfoPage";
-        return null;
+            callGetAddUserInfoPage();
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    private String callGetAddUserInfoPage()
+    {
+        return "redirect:/addUserInfoPage";
     }
 
     @GetMapping("/addUserInfoPage")
@@ -100,7 +106,7 @@ public class OpenPagesController extends mainController {
     @GetMapping("/subscriptionsPage")
     public String getSubscriptionsPage(final Model model)
     {
-        final String returnedValue = checkUserAvailabilityInSystem();
+        checkUserAvailabilityInSystem();
         model.addAttribute("subscribes", getUserSubscriptions());
         return "subscriptionsPage";
     }
@@ -190,7 +196,7 @@ public class OpenPagesController extends mainController {
     @GetMapping("/addNewsPage")
     public String getAddNewsPage(final Model model)
     {
-        final String returnedValue = checkUserAvailabilityInSystem();
+        checkUserAvailabilityInSystem();
         model.addAttribute("publication", 0);
         return "addNewsPage";
     }

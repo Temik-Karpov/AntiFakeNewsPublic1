@@ -31,8 +31,8 @@ public class UserActivityController extends OpenPagesController {
                           @RequestParam("category") final Integer category,
                           @RequestParam("photo") final MultipartFile[] files,
                           final Model model) throws IOException {
-        String returnedValue = checkUserAvailabilityInSystem();
-        returnedValue = isNewsTextAndTitleEmpty(text, title, model);
+        checkUserAvailabilityInSystem();
+        isNewsTextAndTitleEmpty(text, title, model);
         News news = new News(title, category, text, Date.from(Instant.now()),
                 getAuthUserId(), false);
         newsRepo.save(news);
@@ -43,16 +43,19 @@ public class UserActivityController extends OpenPagesController {
         return "redirect:/";
     }
 
-    private String isNewsTextAndTitleEmpty(final String text, final String title,
+    private void isNewsTextAndTitleEmpty(final String text, final String title,
                                            final Model model)
     {
         if(text.isEmpty() || title.isEmpty())
-        {
-            model.addAttribute("nullError", 1);
-            model.addAttribute("publication", 0);
-            return "addNewsPage";
-        }
-        return null;
+            callGetAddNewsPage(model);
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    private String callGetAddNewsPage(final Model model)
+    {
+        model.addAttribute("nullError", 1);
+        model.addAttribute("publication", 0);
+        return "addNewsPage";
     }
 
     private void addFilesToNews(final MultipartFile[] files, final News news) throws IOException {
@@ -85,7 +88,7 @@ public class UserActivityController extends OpenPagesController {
     public String editNews(@PathVariable("id") final Integer id,
                            final Model model)
     {
-        final String returnedValue = checkUserAvailabilityInSystem();
+        checkUserAvailabilityInSystem();
         model.addAttribute("publication", newsRepo.findNewsById(id));
         model.addAttribute("users", userRepo);
         newsRepo.delete(newsRepo.findNewsById(id));     //todo: сделать отмену изменения новости(чтобы не удалялась)
@@ -96,7 +99,7 @@ public class UserActivityController extends OpenPagesController {
     public String rateNews(@PathVariable("id") final Integer id,
                            @RequestParam("mark") final  Integer mark)
     {
-        final String returnedValue = checkUserAvailabilityInSystem();
+        checkUserAvailabilityInSystem();
         Mark newMark = new Mark(id, getAuthUserId(), mark);
         markRepo.save(newMark);
         calculateUserAverageMark(id);
@@ -118,7 +121,7 @@ public class UserActivityController extends OpenPagesController {
     @GetMapping("/subscribeUser/{id}")
     public String subscribeUser(@PathVariable("id") final String id)
     {
-        final String returnedValue = checkUserAvailabilityInSystem();
+        checkUserAvailabilityInSystem();
         Subscription subscribe = new Subscription();
         subscribe.setUserSubscribeId(id);
         subscribe.setUserId(getAuthUserId());
@@ -130,7 +133,7 @@ public class UserActivityController extends OpenPagesController {
     @GetMapping("/unsubscribeUser/{id}")
     public String unsubscribeUser(@PathVariable("id") final String id)
     {
-        final String returnedValue = checkUserAvailabilityInSystem();
+        checkUserAvailabilityInSystem();
         subscribeRepo.delete(subscribeRepo.findSubscriptionByUserSubscribeIdAndAndUserId(id, getAuthUserId()));
         return "redirect:/";
     }
@@ -141,7 +144,7 @@ public class UserActivityController extends OpenPagesController {
                               @RequestParam("description") final String description,
                               @RequestParam("image") final MultipartFile file,
                               final Model model) throws IOException {
-        final String returnedValue = isUserInfoCorrect(username, description, file, model);
+        isUserInfoCorrect(username, description, file, model);
         userInfo newUser = new userInfo(getAuthUserId(), username, email, description,
                 10.0, 10.0, 0);
 
@@ -156,30 +159,36 @@ public class UserActivityController extends OpenPagesController {
         return "redirect:/authProfilePage";
     }
 
-    private String isUserInfoCorrect(final String username,
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private void isUserInfoCorrect(final String username,
                                      final String description, final MultipartFile file,
                                      final Model model) throws IOException {
         if(username.isEmpty() || description.isEmpty() || file.getBytes().length < 1)
         {
             model.addAttribute("nullError", 1);
-            return "addUserInfoPage";
+            callGetAddUserInfoPage();
         }
         if(file.getBytes().length > 31457280)
         {
             model.addAttribute("imageError", 1);
-            return "addUserInfoPage";
+            callGetAddUserInfoPage();
         }
         if(description.length() > 300)
         {
             model.addAttribute("descError", 1);
-            return "addUserInfoPage";
+            callGetAddUserInfoPage();
         }
         if(username.length() > 15)
         {
             model.addAttribute("descError", 1);
-            return "addUserInfoPage";
+            callGetAddUserInfoPage();
         }
-        return null;
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    private String callGetAddUserInfoPage()
+    {
+        return "addUserInfoPage";
     }
 
 }
