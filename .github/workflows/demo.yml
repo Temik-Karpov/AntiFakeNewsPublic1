@@ -6,3 +6,7 @@ jobs:
     steps:
       - name: Print to console
         run: echo Hello!
+      - name: Print a few lines
+        run: |
+          echo 1
+          echo 2
