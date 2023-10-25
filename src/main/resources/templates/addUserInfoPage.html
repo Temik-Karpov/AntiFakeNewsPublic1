@@ -10,19 +10,11 @@
 
 <h4 class="mb-3">Add information</h4>
 <hr class="my-4">
-<form class="needs-validation" action="/addUserInfo" method="post" enctype="multipart/form-data">
+<form class="needs-validation" th:action="@{/addUserInfo}" th:object="${userInfo}" method="post" enctype="multipart/form-data">
     <div class="col-sm-6">
         <label class="form-label">Username</label>
         <div class="input-group has-validation">
-            <input type="text" class="form-control" name="username" required>
-        </div>
-    </div>
-    <br>
-
-    <div class="col-sm-6">
-        <label class="form-label">Email</label>
-        <div class="input-group has-validation">
-            <input type="email" class="form-control" name="email" required>
+            <input type="text" class="form-control" name="username" id="username" field="*{username}" required>
         </div>
     </div>
     <br>
@@ -30,7 +22,7 @@
     <div class="col-sm-6">
         <label class="form-label">Description</label>
         <div class="input-group has-validation">
-            <textarea class="form-control" name="description" required></textarea>
+            <textarea class="form-control" name="description" id="description" field="*{description}" required></textarea>
         </div>
     </div>
 

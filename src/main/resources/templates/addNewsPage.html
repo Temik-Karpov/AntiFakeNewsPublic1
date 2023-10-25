@@ -9,15 +9,16 @@
 <header th:insert="header :: header"></header>
 <h4 style="margin-left: 100px" class="mb-3">Add your publication</h4>
 <hr class="my-4">
-<form class="needs-validation" action="/addNews" method="post" enctype="multipart/form-data">
+<form class="needs-validation" th:action="@{/addNews}" method="post" enctype="multipart/form-data" th:object="${newsData}">
     <div class="col-sm-6">
         <label style="margin-left: 100px" class="form-label">Title</label>
         <div class="input-group has-validation">
             <div th:if="${publication != 0}">
-                <input style="margin-left: 100px" type="text" class="form-control" name="Title" placeholder="Title" th:value="${publication.getName()}" required>
+                <input style="margin-left: 100px" type="text" class="form-control" name="name" id="name" field="*{name}"
+                       placeholder="Title" th:value="${publication.getName()}" required>
             </div>
             <div th:if="${publication == 0}">
-                <input style="margin-left: 100px" type="text" class="form-control" name="Title" placeholder="Title" required>
+                <input style="margin-left: 100px" type="text" class="form-control" name="name" id="name" field="*{name}" placeholder="Title" required>
             </div>
         </div>
     </div>
@@ -27,10 +28,10 @@
         <label style="margin-left: 100px" class="form-label">Text</label>
         <div class="input-group has-validation">
             <div th:if="${publication != 0}">
-                <textarea style="margin-left: 100px" name="text" th:text="${publication.getText()}" required></textarea>
+                <textarea style="margin-left: 100px" name="text" id="text" field="*{text}" th:text="${publication.getText()}" required></textarea>
             </div>
             <div th:if="${publication == 0}">
-                <textarea style="margin-left: 100px" name="text" required></textarea>
+                <textarea style="margin-left: 100px" name="text" id="text" field="*{text}" required></textarea>
             </div>
         </div>
     </div>
@@ -39,10 +40,10 @@
     <div class="col-sm-6">
         <label style="margin-left: 100px" class="form-label">Text</label>
         <div class="input-group has-validation">
-            <select style="margin-left: 100px" name="category" id="category" required>
+            <select style="margin-left: 100px" name="categoryId" id="categoryId" field="*{categoryId}" required>
                 <option value = 1>Sport</option>
                 <option value = 2>Culture</option>
-                <option value = 3>Economic</option>S
+                <option value = 3>Economic</option>
                 <option value = 4>Politics</option>
                 <option value = 5>Science</option>
             </select>

@@ -1,12 +1,12 @@
 package ru.karpov.AntiFakeNewsPublic.controllers;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.view.RedirectView;
 import ru.karpov.AntiFakeNewsPublic.models.*;
 import ru.karpov.AntiFakeNewsPublic.repos.*;
 
@@ -18,45 +18,38 @@ import java.time.Instant;
 import java.util.Date;
 
 @Controller
-public class UserActivityController extends OpenPagesController {
+public class UserActivityController extends mainController {
 
-    public UserActivityController(final userRepo userRepo, final newsRepo newsRepo,
-                                  final subscriptionRepo subscribeRepo, final markRepo markRepo,
-                                  final imageNewsRepo imageNewsRepo, final notificationRepo notificationRepo) {
-        super(userRepo, newsRepo, subscribeRepo, markRepo, imageNewsRepo, notificationRepo);
+    @Autowired
+    public UserActivityController(final userRepo userRepo, final newsRepo newsRepo, final subscriptionRepo subscribeRepo,
+                               final markRepo markRepo, final imageNewsRepo imageNewsRepo)
+    {
+        super(userRepo, newsRepo, subscribeRepo, markRepo, imageNewsRepo);
     }
 
     @PostMapping("/addNews")
-    public String addNews(@RequestParam("Title") final String title, @RequestParam("text") final String text,
-                          @RequestParam("category") final Integer category,
-                          @RequestParam("photo") final MultipartFile[] files,
-                          final Model model) throws IOException {
-        checkUserAvailabilityInSystem();
-        isNewsTextAndTitleEmpty(text, title, model);
-        News news = new News(title, category, text, Date.from(Instant.now()),
-                getAuthUserId(), false);
+    public RedirectView addNews(@ModelAttribute("newsData") final News news,
+                                @RequestParam("photo") final MultipartFile[] files,
+                                final RedirectAttributes attributes) throws IOException {
+        if(userRepo.findUserById(getAuthUserId()) == null)
+            return new RedirectView("/addUserInfoPage");
+
+        if(news.getText().isEmpty() || news.getName().isEmpty()) {
+            attributes.addFlashAttribute("nullError", 1);
+            attributes.addFlashAttribute("publication", 0);
+            return new RedirectView("/addNewsPage");
+        }
+        news.setBlocked(false);
+        news.setAuthorId(getAuthUserId());
+        news.setDate(Date.from(Instant.now()));
         newsRepo.save(news);
         userInfo user = userRepo.findUserById(getAuthUserId());
         user.increaseCountOfPublications();
         userRepo.save(user);
         addFilesToNews(files, news);
-        return "redirect:/";
+        return new RedirectView("/");
     }
 
-    private void isNewsTextAndTitleEmpty(final String text, final String title,
-                                           final Model model)
-    {
-        if(text.isEmpty() || title.isEmpty())
-            callGetAddNewsPage(model);
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    private String callGetAddNewsPage(final Model model)
-    {
-        model.addAttribute("nullError", 1);
-        model.addAttribute("publication", 0);
-        return "addNewsPage";
-    }
 
     @SuppressWarnings("MismatchedQueryAndUpdateOfStringBuilder")
     private void addFilesToNews(final MultipartFile[] files, final News news) throws IOException {
@@ -78,10 +71,10 @@ public class UserActivityController extends OpenPagesController {
     }
 
     @GetMapping("/deleteNews/{id}")
-    public String deleteNews(@PathVariable("id") final Integer id) {
+    public RedirectView deleteNews(@PathVariable("id") final Integer id) {
         newsRepo.delete(newsRepo.findNewsById(id));
         deleteImageNewsFromPathAndRepo(id);
-        return "redirect:/";
+        return new RedirectView("/");
     }
 
     private void deleteImageNewsFromPathAndRepo(final Integer id) {
@@ -106,7 +99,8 @@ public class UserActivityController extends OpenPagesController {
     public String editNews(@PathVariable("id") final Integer id,
                            final Model model)
     {
-        checkUserAvailabilityInSystem();
+        if(userRepo.findUserById(getAuthUserId()) == null)
+            return "addUserInfoPage";
         model.addAttribute("publication", newsRepo.findNewsById(id));
         model.addAttribute("users", userRepo);
         newsRepo.delete(newsRepo.findNewsById(id));     //todo: сделать отмену изменения новости(чтобы не удалялась)
@@ -114,14 +108,15 @@ public class UserActivityController extends OpenPagesController {
     }
 
     @PostMapping("/rateNews/{id}")
-    public String rateNews(@PathVariable("id") final Integer id,
+    public RedirectView rateNews(@PathVariable("id") final Integer id,
                            @RequestParam("mark") final  Integer mark)
     {
-        checkUserAvailabilityInSystem();
+        if(userRepo.findUserById(getAuthUserId()) == null)
+            return new RedirectView("/addUserInfoPage");
         Mark newMark = new Mark(id, getAuthUserId(), mark);
         markRepo.save(newMark);
         calculateUserAverageMark(id);
-        return "redirect:/";
+        return new RedirectView("/");
     }
 
     private void calculateUserAverageMark(final Integer id)
@@ -137,76 +132,62 @@ public class UserActivityController extends OpenPagesController {
     }
 
     @GetMapping("/subscribeUser/{id}")
-    public String subscribeUser(@PathVariable("id") final String id)
+    public RedirectView subscribeUser(@PathVariable("id") final String id)
     {
-        checkUserAvailabilityInSystem();
+        if(userRepo.findUserById(getAuthUserId()) == null)
+            return new RedirectView("/addUserInfoPage");
         Subscription subscribe = new Subscription();
         subscribe.setUserSubscribeId(id);
         subscribe.setUserId(getAuthUserId());
         subscribeRepo.save(subscribe);
-
-        return "redirect:/";
+        return new RedirectView("/");
     }
 
     @GetMapping("/unsubscribeUser/{id}")
-    public String unsubscribeUser(@PathVariable("id") final String id)
+    public RedirectView unsubscribeUser(@PathVariable("id") final String id)
     {
-        checkUserAvailabilityInSystem();
+        if(userRepo.findUserById(getAuthUserId()) == null)
+            return new RedirectView("/addUserInfoPage");
         subscribeRepo.delete(subscribeRepo.findSubscriptionByUserSubscribeIdAndAndUserId(id, getAuthUserId()));
-        return "redirect:/";
+        return new RedirectView("/");
     }
 
     @PostMapping("/addUserInfo")
-    public String addUserInfo(@RequestParam("username") final String username,
-                              @RequestParam("email") final String email,
-                              @RequestParam("description") final String description,
-                              @RequestParam("image") final MultipartFile file,
-                              final Model model) throws IOException {
-        isUserInfoCorrect(username, description, file, model);
-        userInfo newUser = new userInfo(getAuthUserId(), username, email, description,
-                10.0, 10.0, 0);
-
+    public RedirectView addUserInfo(@ModelAttribute("userInfo") final userInfo user,
+                                    @RequestParam("image") final MultipartFile file,
+                                    final RedirectAttributes attributes) throws IOException {
+        if(user.getUsername().isEmpty() || user.getDescription().isEmpty() || file.getBytes().length < 1)
+        {
+            attributes.addFlashAttribute("nullError", 1);
+            return new RedirectView("/addUserInfoPage");
+        }
+        if(file.getBytes().length > 31457280)
+        {
+            attributes.addFlashAttribute("imageError", 1);
+            return new RedirectView("/addUserInfoPage");
+        }
+        if(user.getDescription().length() > 300)
+        {
+            attributes.addFlashAttribute("descError", 1);
+            return new RedirectView("/addUserInfoPage");
+        }
+        if(user.getUsername().length() > 15)
+        {
+            attributes.addFlashAttribute("descError", 1);
+            return new RedirectView("/addUserInfoPage");
+        }
+        user.setId(getAuthUserId());
+        user.setCountOfPublications(0);
+        user.setFixFakeRating(10.0);
+        user.setSearchFakeRating(10.0);
         Path fileNameAndPath = Paths.get("D:/temik/Work/Data/AntiFakeNewsPublic/src/main/resources/static/profileImages",
                 file.getOriginalFilename());
             //Path fileNameAndPath = Paths.get("D:/Programs/Work/AnitFakeNewsPublic/src/main/resources/static/profileImages",
             //file.getOriginalFilename());
         Files.write(fileNameAndPath, file.getBytes());
-        newUser.setImageUrl("/profileImages/" + file.getOriginalFilename());
-
-        userRepo.save(newUser);
-        return "redirect:/authProfilePage";
-    }
-
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void isUserInfoCorrect(final String username,
-                                     final String description, final MultipartFile file,
-                                     final Model model) throws IOException {
-        if(username.isEmpty() || description.isEmpty() || file.getBytes().length < 1)
-        {
-            model.addAttribute("nullError", 1);
-            callGetAddUserInfoPage();
-        }
-        if(file.getBytes().length > 31457280)
-        {
-            model.addAttribute("imageError", 1);
-            callGetAddUserInfoPage();
-        }
-        if(description.length() > 300)
-        {
-            model.addAttribute("descError", 1);
-            callGetAddUserInfoPage();
-        }
-        if(username.length() > 15)
-        {
-            model.addAttribute("descError", 1);
-            callGetAddUserInfoPage();
-        }
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    private String callGetAddUserInfoPage()
-    {
-        return "addUserInfoPage";
+        user.setImageUrl("/profileImages/" + file.getOriginalFilename());
+        userRepo.save(user);
+        return new RedirectView("/authProfilePage");
     }
 
 }

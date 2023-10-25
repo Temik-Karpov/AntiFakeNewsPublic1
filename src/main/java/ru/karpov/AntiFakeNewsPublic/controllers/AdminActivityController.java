@@ -1,11 +1,11 @@
 package ru.karpov.AntiFakeNewsPublic.controllers;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.view.RedirectView;
 import ru.karpov.AntiFakeNewsPublic.models.News;
 import ru.karpov.AntiFakeNewsPublic.models.Notification;
 import ru.karpov.AntiFakeNewsPublic.repos.*;
@@ -13,10 +13,15 @@ import ru.karpov.AntiFakeNewsPublic.repos.*;
 @Controller
 public class AdminActivityController extends mainController {
 
-    public AdminActivityController(final userRepo userRepo, final newsRepo newsRepo,
-                                   final subscriptionRepo subscribeRepo, final markRepo markRepo,
-                                   final imageNewsRepo imageNewsRepo, final notificationRepo notificationRepo) {
-        super(userRepo, newsRepo, subscribeRepo, markRepo, imageNewsRepo, notificationRepo);
+    private final notificationRepo notificationRepo;
+
+    @Autowired
+    public AdminActivityController(final userRepo userRepo, final newsRepo newsRepo, final subscriptionRepo subscribeRepo,
+                               final markRepo markRepo, final imageNewsRepo imageNewsRepo,
+                               final notificationRepo notificationRepo)
+    {
+        super(userRepo, newsRepo, subscribeRepo, markRepo, imageNewsRepo);
+        this.notificationRepo = notificationRepo;
     }
 
     @GetMapping("/userListPage")
@@ -27,13 +32,13 @@ public class AdminActivityController extends mainController {
     }
 
     @GetMapping("/deleteUser/{id}")
-    public String deleteUser(@PathVariable("id") final String id)
+    public RedirectView deleteUser(@PathVariable("id") final String id)
     {
         userRepo.delete(userRepo.findUserById(id));
         deleteUserNews(id);
         deleteUserSubscribe(id);
         deleteUserMarks(id);
-        return "forward:/userListPage";
+        return new RedirectView("/userListPage");
     }
 
     private void deleteUserNews(final String id)
@@ -60,40 +65,26 @@ public class AdminActivityController extends mainController {
     }
 
     @GetMapping("/notifyUserPage/{id}")
-    public String getNotifyUserPage(@PathVariable("id") final String id,
-                             Model model)
+    public RedirectView getNotifyUserPage(@PathVariable("id") final String id,
+                                          final RedirectAttributes attributes)
     {
-        model.addAttribute("id", id);
-        return "notificationPage";
+        attributes.addFlashAttribute("id", id);
+        return new RedirectView("/notificationPage");
     }
 
     @PostMapping("/sendNotification/{id}")
-    public String sendNotification(@PathVariable("id") final String id,
-                                   @RequestParam("name") final String name,
-                                   @RequestParam("notification") final String notification,
-                                   final Model model)
+    public RedirectView sendNotification(@PathVariable("id") final String id,
+                                         @ModelAttribute("notificationData") final Notification notification,
+                                         final RedirectAttributes attributes)
     {
-        isNameAndNotificationEmpty(id, name, notification, model);
-        Notification newNotification = new Notification(id, name, notification);
-        notificationRepo.save(newNotification);
-        return "redirect:/userListPage";
-    }
-
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void isNameAndNotificationEmpty(final String id, final String name,
-                                            final String notification, final Model model)
-    {
-        if(name.isEmpty() || notification.isEmpty())
+        if(notification.getName().isEmpty() || notification.getText().isEmpty())
         {
-            model.addAttribute("id", id);
-            model.addAttribute("nullError", 1);
-            getNotificationPage();
+            attributes.addFlashAttribute("id", id);
+            attributes.addFlashAttribute("nullError", 1);
+            return new RedirectView("/notificationPage");
         }
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    private String getNotificationPage()
-    {
-        return "notificationPage";
+        notification.setUserId(id);
+        notificationRepo.save(notification);
+        return new RedirectView("/userListPage");
     }
 }

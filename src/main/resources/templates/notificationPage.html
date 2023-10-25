@@ -12,11 +12,11 @@
 
 <hr class="my-4">
 
-<form class="needs-validation" th:action="@{/sendNotification/{id}(id = ${id})}" method="post" enctype="multipart/form-data">
+<form class="needs-validation" th:action="@{/sendNotification/{id}(id = ${id})}" th:object="${notificationData}" method="post" enctype="multipart/form-data">
     <div class="col-sm-6">
         <label class="form-label">Name</label>
         <div class="input-group has-validation">
-            <input type="text" class="form-control" name="name">
+            <input type="text" class="form-control" name="name" id="name" field="*{name}">
         </div>
     </div>
 
@@ -25,7 +25,7 @@
     <div class="col-sm-6">
         <label class="form-label">Notification</label>
         <div class="input-group has-validation">
-            <textarea class="form-control" name="notification"></textarea>
+            <textarea class="form-control" name="notification" id="notification" field="*{notification}"></textarea>
         </div>
     </div>
     <br>

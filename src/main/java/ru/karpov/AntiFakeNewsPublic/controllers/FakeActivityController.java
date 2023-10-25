@@ -1,12 +1,11 @@
 package ru.karpov.AntiFakeNewsPublic.controllers;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.view.RedirectView;
 import ru.karpov.AntiFakeNewsPublic.models.Fake;
 import ru.karpov.AntiFakeNewsPublic.models.News;
 import ru.karpov.AntiFakeNewsPublic.models.Notification;
@@ -19,20 +18,35 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Controller
-public class FakeActivityController extends UserActivityController {
+public class FakeActivityController extends mainController {
 
     private final fakeRepo fakeRepo;
     private final fileFakeRepo fileFakeRepo;
+    private final notificationRepo notificationRepo;
 
-    public FakeActivityController(final userRepo userRepo, final newsRepo newsRepo,
+    @Autowired
+    public FakeActivityController(final userRepo userRepo, final newsRepo newsRepo, final imageNewsRepo imageNewsRepo,
+                                  final notificationRepo notificationRepo, final fakeRepo fakeRepo,
                                   final subscriptionRepo subscribeRepo, final markRepo markRepo,
-                                  final imageNewsRepo imageNewsRepo, final notificationRepo notificationRepo,
-                                  final fakeRepo fakeRepo, final fileFakeRepo fileFakeRepo) {
-        super(userRepo, newsRepo, subscribeRepo, markRepo, imageNewsRepo, notificationRepo);
+                                  final fileFakeRepo fileFakeRepo)
+    {
+        super(userRepo, newsRepo, subscribeRepo, markRepo, imageNewsRepo);
+        this.notificationRepo = notificationRepo;
         this.fakeRepo = fakeRepo;
         this.fileFakeRepo = fileFakeRepo;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    protected void checkUserAvailabilityInSystem()
+    {
+        if(userRepo.findUserById(getAuthUserId()) == null)
+            callGetAddUserInfoPage();
+    }
+
+    private String callGetAddUserInfoPage()
+    {
+        return "addUserInfoPage";
+    }
 
     @GetMapping("/addFakePage/{newsId}")
     public String getAddFakePage(@PathVariable("newsId") final Integer newsId,
@@ -42,19 +56,19 @@ public class FakeActivityController extends UserActivityController {
     }
 
     @PostMapping("/addFake/{newsId}")
-    public String addFake(@RequestParam("Title") final String problem,
-                          @PathVariable("newsId") final Integer newsId,
-                          @RequestParam("text") final String proofs,
-                          @RequestParam("files") final MultipartFile[] files,
-                          Model model) throws IOException {
+    public RedirectView addFake(@ModelAttribute("fakeData") final Fake fake,
+                                @PathVariable("newsId") final Integer newsId,
+                                @RequestParam("files") final MultipartFile[] files,
+                                Model model) throws IOException {
         checkUserAvailabilityInSystem();
-        isProblemAndProofsEmpty(problem, proofs, model);
-        Fake newFake = new Fake(newsId, getAuthUserId(), problem, proofs,
-                newsRepo.findNewsById(newsId).getCategoryId());
-        addFilesIntoFake(files, newFake);
-        fakeRepo.save(newFake);
+        isProblemAndProofsEmpty(fake.getName(), fake.getText(), model);
+        fake.setUserId(getAuthUserId());
+        fake.setNewsId(newsId);
+        fake.setCategoryId(newsRepo.findNewsById(newsId).getCategoryId());
+        addFilesIntoFake(files, fake);
+        fakeRepo.save(fake);
         blockNews(newsId);
-        return "redirect:/";
+        return new RedirectView("/");
     }
 
     private void blockNews(final Integer newsId)
@@ -132,7 +146,7 @@ public class FakeActivityController extends UserActivityController {
     }
 
     @GetMapping("/notAcceptFake/{id}")
-    public String notAcceptFake(@PathVariable("id") final Integer fakeId)
+    public RedirectView notAcceptFake(@PathVariable("id") final Integer fakeId)
     {
         Fake currentFake = fakeRepo.findFakeById(fakeId);
         currentFake.setAdminId(getAuthUserId());
@@ -142,11 +156,11 @@ public class FakeActivityController extends UserActivityController {
         fakeNews.setBlocked(false);
         newsRepo.save(fakeNews);
         //TODO: снижение рейтинга для пользователя, который нашел фейк
-        return "redirect:/";
+        return new RedirectView("/");
     }
 
     @GetMapping("/acceptFake/{id}")
-    public String acceptFake(@PathVariable("id") final Integer fakeId)
+    public RedirectView acceptFake(@PathVariable("id") final Integer fakeId)
     {
         Fake currentFake = fakeRepo.findFakeById(fakeId);
         currentFake.setAdminId(getAuthUserId());
@@ -157,7 +171,7 @@ public class FakeActivityController extends UserActivityController {
         {
             //TODO: повышение рейтинга для пользователя, который нашел фейк и снизить для неправильного админа
         }
-        return "redirect:/";
+        return new RedirectView("/");
     }
 
     private void sendNotification(final Integer fakeId)

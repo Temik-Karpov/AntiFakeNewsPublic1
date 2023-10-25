@@ -1,11 +1,11 @@
 package ru.karpov.AntiFakeNewsPublic.controllers;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.view.RedirectView;
 import ru.karpov.AntiFakeNewsPublic.models.Mark;
 import ru.karpov.AntiFakeNewsPublic.models.News;
 import ru.karpov.AntiFakeNewsPublic.models.Subscription;
@@ -21,56 +21,38 @@ import java.util.List;
 @Controller
 public class OpenPagesController extends mainController {
 
-    public OpenPagesController(final userRepo userRepo, final newsRepo newsRepo,
-                               final subscriptionRepo subscribeRepo, final markRepo markRepo,
-                               final imageNewsRepo imageNewsRepo, final notificationRepo notificationRepo) {
-        super(userRepo, newsRepo, subscribeRepo, markRepo, imageNewsRepo, notificationRepo);
+    private final notificationRepo notificationRepo;
+
+    @Autowired
+    public OpenPagesController(final userRepo userRepo, final newsRepo newsRepo, final subscriptionRepo subscribeRepo,
+                          final markRepo markRepo, final imageNewsRepo imageNewsRepo,
+                          final notificationRepo notificationRepo)
+    {
+        super(userRepo, newsRepo, subscribeRepo, markRepo, imageNewsRepo);
+        this.notificationRepo = notificationRepo;
+    }
+
+    @GetMapping("/mainPage")
+    public String getMainPage(final Model model)
+    {
+        model.addAttribute("users", userRepo);
+        return "mainPage";
     }
 
     @GetMapping("/")
-    public String getMainPage(final Model model)
+    public RedirectView getMainPage(final RedirectAttributes attributes)
     {
-        model.addAttribute("publications", newsRepo.findNewsByIsBlockedFalse());
-        model.addAttribute("users", userRepo);
-        return "mainPage";
-    }
-
-    @GetMapping("/authProfilePage")
-    public String getAuthProfilePage(final Model model)
-    {
-        checkUserAvailabilityInSystem();
-        model.addAttribute("user", userRepo.findUserById(getAuthUserId()));
-        model.addAttribute("publications", newsRepo.findNewsByAuthorId(getAuthUserId()));
-        model.addAttribute("users", userRepo);
-        return "authProfilePage";
-    }
-
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    protected void checkUserAvailabilityInSystem()
-    {
-        if(userRepo.findUserById(getAuthUserId()) == null)
-            callGetAddUserInfoPage();
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    private String callGetAddUserInfoPage()
-    {
-        return "redirect:/addUserInfoPage";
-    }
-
-    @GetMapping("/addUserInfoPage")
-    public String getAuthProfilePage()
-    {
-        return "addUserInfoPage";
+        attributes.addFlashAttribute("publications", newsRepo.findNewsByIsBlockedFalse());
+        return new RedirectView("/mainPage");
     }
 
     @PostMapping("/reloadMainPage")
-    public String getReloadMainWithNewCategoryPage(@RequestParam("category") final Integer category,
-                                    final Model model)
+    public RedirectView getReloadMainWithNewCategoryPage(@RequestParam("category") final Integer category,
+                                                         final RedirectAttributes attributes)
     {
-        model.addAttribute("users", userRepo);
-        model.addAttribute("publications", getListOfNewsAtMainPageWithNewCategory(category));
-        return "mainPage";
+        List<News> news = getListOfNewsAtMainPageWithNewCategory(category);
+        attributes.addFlashAttribute("publications", news);
+        return new RedirectView("/mainPage");
     }
 
     private List<News> getListOfNewsAtMainPageWithNewCategory(final Integer category)
@@ -83,14 +65,36 @@ public class OpenPagesController extends mainController {
         }
     }
 
-    @PostMapping("/reloadAuthProfilePage")
-    public String reloadAuthProfileWithNewCategoryPage(@RequestParam("category") final Integer category,
-                                        final Model model)
+    @GetMapping("/authProfilePageInfo")
+    public String getAuthProfilePage(final Model model)
     {
-        model.addAttribute("users", userRepo);
         model.addAttribute("user", userRepo.findUserById(getAuthUserId()));
-        model.addAttribute("publications", getListOfNewsAtAuthProfilePageWithNewCategory(category));
+        model.addAttribute("users", userRepo);
         return "authProfilePage";
+    }
+
+    @GetMapping("/authProfilePage")
+    public RedirectView getAuthProfilePage(final RedirectAttributes attributes)
+    {
+        if(userRepo.findUserById(getAuthUserId()) == null)
+            return new RedirectView("/addUserInfoPage");
+        attributes.addFlashAttribute("publications", newsRepo.findNewsByAuthorId(getAuthUserId()));
+        return new RedirectView("/authProfilePageInfo");
+    }
+
+    @GetMapping("/addUserInfoPage")
+    public String getAddUserInfoPage()
+    {
+        return "addUserInfoPage";
+    }
+
+    @PostMapping("/reloadAuthProfilePage")
+    public RedirectView reloadAuthProfileWithNewCategoryPage(@RequestParam("category") final Integer category,
+                                                             final RedirectAttributes attributes)
+    {
+        List<News> news = getListOfNewsAtAuthProfilePageWithNewCategory(category);
+        attributes.addFlashAttribute("publications", news);
+        return new RedirectView("/authProfilePageInfo");
     }
 
     private List<News> getListOfNewsAtAuthProfilePageWithNewCategory(final Integer category)
@@ -106,7 +110,8 @@ public class OpenPagesController extends mainController {
     @GetMapping("/subscriptionsPage")
     public String getSubscriptionsPage(final Model model)
     {
-        checkUserAvailabilityInSystem();
+        if(userRepo.findUserById(getAuthUserId()) == null)
+            return "addUserInfoPage";
         model.addAttribute("subscribes", getUserSubscriptions());
         return "subscriptionsPage";
     }
@@ -120,6 +125,7 @@ public class OpenPagesController extends mainController {
         }
         return subscribeUsers;
     }
+
 
     @GetMapping("/profilePage/{usernameId}")
     public String getProfilePage(@PathVariable("usernameId") final String usernameId,
@@ -143,9 +149,9 @@ public class OpenPagesController extends mainController {
     }
 
     @GetMapping("/logout")
-    public String logout(final HttpServletRequest request) throws ServletException {
+    public RedirectView logout(final HttpServletRequest request) throws ServletException {
         request.logout();
-        return "redirect:/";
+        return new RedirectView("/");
     }
 
     @GetMapping("/newsPage/{id}")
@@ -175,7 +181,7 @@ public class OpenPagesController extends mainController {
     @PostMapping("/reloadProfilePage/{userId}")
     public String reloadProfilePage(@PathVariable("userId") final String userId,
                                     @RequestParam("category") final Integer category,
-                                    final  Model model)
+                                    final Model model)
     {
         model.addAttribute("users", userRepo);
         model.addAttribute("user", userRepo.findUserById(userId));
@@ -196,7 +202,8 @@ public class OpenPagesController extends mainController {
     @GetMapping("/addNewsPage")
     public String getAddNewsPage(final Model model)
     {
-        checkUserAvailabilityInSystem();
+        if(userRepo.findUserById(getAuthUserId()) == null)
+            return "addUserInfoPage";
         model.addAttribute("publication", 0);
         return "addNewsPage";
     }
@@ -215,5 +222,11 @@ public class OpenPagesController extends mainController {
         users.sort(Comparator.comparing(userInfo::getSearchFakeRating).reversed());
         model.addAttribute("users", users);
         return "showRatingPage";
+    }
+
+    @GetMapping("/notificationPage")
+    public String getNotificationPage()
+    {
+        return "notificationPage";
     }
 }
