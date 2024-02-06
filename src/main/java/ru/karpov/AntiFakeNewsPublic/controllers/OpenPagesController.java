@@ -32,6 +32,24 @@ public class OpenPagesController extends mainController {
         this.notificationRepo = notificationRepo;
     }
 
+    @PostMapping("/AddNews")
+    public RedirectView getADDNEWS(@RequestParam("category") final Integer category,
+                                   @RequestParam("name") final String name,
+                                   @RequestParam("text") final String text,
+                                   @RequestParam("userId") final Integer id)
+    {
+        return new RedirectView("/");
+    }
+
+    @PostMapping("/EditInfo")
+    public RedirectView getADDNEWS(@RequestParam("firstName") final String name,
+                                   @RequestParam("LastName") final String last,
+                                   @RequestParam("username") final String text,
+                                   @RequestParam("Age") final Integer gh)
+    {
+        return new RedirectView("/");
+    }
+    /*
     @GetMapping("/mainPage")
     public String getMainPage(final Model model)
     {
@@ -45,6 +63,22 @@ public class OpenPagesController extends mainController {
         attributes.addFlashAttribute("publications", newsRepo.findNewsByIsBlockedFalse());
         return new RedirectView("/mainPage");
     }
+*/
+
+    @GetMapping("/mainPage")
+    public String getMainPage(final Model model)
+    {
+        model.addAttribute("users", userRepo);
+        return "mainPage";
+    }
+
+    @GetMapping("/")
+    public String getMainPage(final RedirectAttributes attributes, final Model model)
+    {
+        model.addAttribute("publications", newsRepo.findNewsByIsBlockedFalse());
+        model.addAttribute("users", userRepo);
+        return "mainPage";
+    }
 
     @PostMapping("/reloadMainPage")
     public RedirectView getReloadMainWithNewCategoryPage(@RequestParam("category") final Integer category,
@@ -52,7 +86,7 @@ public class OpenPagesController extends mainController {
     {
         List<News> news = getListOfNewsAtMainPageWithNewCategory(category);
         attributes.addFlashAttribute("publications", news);
-        return new RedirectView("/mainPage");
+        return new RedirectView("/");
     }
 
     private List<News> getListOfNewsAtMainPageWithNewCategory(final Integer category)
